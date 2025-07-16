@@ -1,10 +1,12 @@
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap';
+// import 'bootstrap/dist/css/bootstrap.min.css';
+import './assets/scss/_variables.scss'
+import 'bootstrap/dist/js/bootstrap.js'
+import 'bootstrap'
 
-import Toast from 'vue-toastification';
-import 'vue-toastification/dist/index.css';
+import Toast from 'vue-toastification'
+import 'vue-toastification/dist/index.css'
 
-import './assets/main.css';
+import './assets/main.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -15,7 +17,7 @@ import axios from './axios'
 const app = createApp(App)
 
 app.use(createPinia())
-app.use(Toast);
-app.use(router);
+app.use(Toast)
+app.use(router)
 
-app.mount('#app');
+app.mount('#app')
