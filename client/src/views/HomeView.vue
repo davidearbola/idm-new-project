@@ -134,7 +134,7 @@ const howItWorksSteps = [
         <div class="row align-items-center g-5">
           <div class="col-lg-6">
             <img
-              src="https://images.pexels.com/photos/5327921/pexels-photo-5327921.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+              src="https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
               class="img-fluid rounded-3 shadow"
               alt="Studio medico moderno"
             />
