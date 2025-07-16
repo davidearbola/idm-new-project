@@ -8,21 +8,25 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: () => import('../views/HomeView.vue'),
+      meta: { layout: 'PublicLayout', showHeader: true, showFooter: true },
     },
     {
       path: '/come-funziona',
       name: 'come-funziona',
       component: () => import('../views/ComeFunzionaView.vue'),
+      meta: { layout: 'PublicLayout', showHeader: true, showFooter: true },
     },
     {
       path: '/login',
       name: 'login',
       component: () => import('../views/Auth/LoginView.vue'),
+      meta: { layout: 'PublicLayout', showHeader: false, showFooter: false },
     },
     {
       path: '/register',
       name: 'register',
       component: () => import('../views/Auth/RegisterView.vue'),
+      meta: { layout: 'PublicLayout', showHeader: false, showFooter: false },
     },
     {
       path: '/dashboard',
@@ -34,6 +38,7 @@ const router = createRouter({
       path: '/forgot-password',
       name: 'forgot-password',
       component: () => import('../views/Auth/ForgotPasswordView.vue'),
+      meta: { layout: 'PublicLayout', showHeader: false, showFooter: false },
     },
     {
       path: '/reset-password',
@@ -45,13 +50,22 @@ const router = createRouter({
       path: '/verify-email',
       name: 'verify-email',
       component: () => import('../views/Auth/VerifyEmailView.vue'),
+      meta: { layout: 'PublicLayout', showHeader: false, showFooter: false },
     },
     {
       path: '/resend-verification',
       name: 'resend-verification',
       component: () => import('../views/Auth/ResendVerificationView.vue'),
+      meta: { layout: 'PublicLayout', showHeader: false, showFooter: false },
     },
   ],
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0 }
+    }
+  },
 })
 
 router.beforeEach(async (to, from, next) => {

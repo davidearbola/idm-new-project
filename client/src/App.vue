@@ -1,15 +1,23 @@
 <script setup>
-import HeaderPublic from './components/HeaderPublic.vue'
-import FooterPublic from './components/FooterPublic.vue'
+import { computed } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
+import PublicLayout from './layouts/PublicLayout.vue'
 
+const route = useRoute()
+
+const layouts = {
+  PublicLayout,
+}
+
+const layout = computed(() => {
+  return layouts[route.meta.layout] || PublicLayout
+})
 </script>
 
 <template>
-  <HeaderPublic/>
-  <main>
+  <component :is="layout">
     <RouterView />
-  </main>
-  <FooterPublic/>
+  </component>
 </template>
 
 <style>
