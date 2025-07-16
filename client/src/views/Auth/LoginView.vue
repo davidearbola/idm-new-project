@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import * as yup from 'yup'
 import { Form, Field, ErrorMessage } from 'vee-validate'
+import logoSrc from '@/assets/images/logo-IDM.png'
 
 const authStore = useAuthStore()
 const { isLoading } = storeToRefs(authStore)
@@ -40,67 +41,66 @@ const handleLogin = async (values, { resetForm }) => {
 </script>
 
 <template>
-  <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h1 class="card-title text-center mb-4">Login</h1>
-          <Form @submit="handleLogin" :validation-schema="schema" v-slot="{ errors }">
-            <div class="mb-3">
-              <label for="email" class="form-label">Indirizzo Email</label>
-              <Field
-                name="email"
-                type="email"
-                class="form-control"
-                :class="{ 'is-invalid': errors.email }"
-                id="email"
-                required
-                :disabled="isLoading"
-              />
-              <ErrorMessage name="email" class="text-danger small" />
-            </div>
-            <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
-              <Field
-                name="password"
-                type="password"
-                class="form-control"
-                :class="{ 'is-invalid': errors.password }"
-                id="password"
-                required
-                :disabled="isLoading"
-              />
-              <ErrorMessage name="password" class="text-danger small" />
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <div class="form-check">
-                <Field
-                  name="remember"
-                  class="form-check-input"
-                  type="checkbox"
-                  :value="true"
-                  id="remember"
-                />
-                <label class="form-check-label" for="remember"> Ricordami </label>
-              </div>
-              <RouterLink to="/forgot-password">Password dimenticata?</RouterLink>
-            </div>
-
-            <div v-if="isNotVerified" class="alert alert-warning" role="alert">
-              La tua email non è stata verificata. Controlla la tua casella di posta.
-              <RouterLink to="/resend-verification" class="alert-link ms-1"
-                >Invia di nuovo</RouterLink
-              >
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100" :disabled="isLoading">
-              <span v-if="isLoading" class="spinner-border spinner-border-sm"></span>
-              <span v-else>Accedi</span>
-            </button>
-          </Form>
+  <div class="card border-0">
+    <div class="card-header text-center py-3">
+      <RouterLink to="/">
+        <img style="height: 3rem;" :src="logoSrc" alt="Il Dentista Migliore Logo">
+      </RouterLink>
+    </div>
+    <div class="card-body p-4">
+      <h1 class="card-title text-center mb-4">Login</h1>
+      <Form @submit="handleLogin" :validation-schema="schema" v-slot="{ errors }">
+        <div class="mb-3">
+          <label for="email" class="form-label">Indirizzo Email</label>
+          <Field
+            name="email"
+            type="email"
+            class="form-control"
+            :class="{ 'is-invalid': errors.email }"
+            id="email"
+            required
+            :disabled="isLoading"
+          />
+          <ErrorMessage name="email" class="text-danger small" />
         </div>
-      </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <Field
+            name="password"
+            type="password"
+            class="form-control"
+            :class="{ 'is-invalid': errors.password }"
+            id="password"
+            required
+            :disabled="isLoading"
+          />
+          <ErrorMessage name="password" class="text-danger small" />
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="form-check">
+            <Field
+              name="remember"
+              class="form-check-input"
+              type="checkbox"
+              :value="true"
+              id="remember"
+            />
+            <label class="form-check-label" for="remember"> Ricordami </label>
+          </div>
+          <RouterLink to="/forgot-password">Password dimenticata?</RouterLink>
+        </div>
+        <div v-if="isNotVerified" class="alert alert-warning" role="alert">
+          La tua email non è stata verificata. Controlla la tua casella di posta.
+          <RouterLink to="/resend-verification" class="alert-link ms-1">Invia di nuovo</RouterLink>
+        </div>
+        <button type="submit" class="btn btn-primary w-100" :disabled="isLoading">
+          <span v-if="isLoading" class="spinner-border spinner-border-sm"></span>
+          <span v-else>Accedi</span>
+        </button>
+        <div class="text-center mt-3">
+            <p class="text-muted">Non hai un account? <RouterLink to="/register">Registrati</RouterLink></p>
+        </div>
+      </Form>
     </div>
   </div>
 </template>

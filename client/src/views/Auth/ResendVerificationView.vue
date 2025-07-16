@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import { useToast } from 'vue-toastification'
 import { useRouter } from 'vue-router'
+import logoSrc from '@/assets/images/logo-IDM.png'
 
 const router = useRouter();
 const toast = useToast();
@@ -28,26 +29,29 @@ const handleResend = async (values, { resetForm}) => {
 </script>
 
 <template>
-  <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h1 class="card-title text-center mb-4">Invia di Nuovo l'Email di Verifica</h1>
-          <p class="text-muted text-center">Non hai ricevuto l'email? Inserisci il tuo indirizzo qui sotto per riceverne una nuova.</p>
-          <Form @submit="handleResend" :validation-schema="schema" v-slot="{ errors }">
-            <div class="mb-3">
-              <label for="email" class="form-label">Il Tuo Indirizzo Email</label>
-              <Field name="email" type="email" class="form-control" :class="{'is-invalid': errors.email}" id="email" required :disabled="isLoading" />
-              <ErrorMessage name="email" class="text-danger small" />
-            </div>
-            
-            <button type="submit" class="btn btn-primary w-100" :disabled="isLoading">
-              <span v-if="isLoading" class="spinner-border spinner-border-sm"></span>
-              <span v-else>Invia di Nuovo il Link</span>
-            </button>
-          </Form>
+  <div class="card border-0">
+    <div class="card-header text-center py-3">
+      <RouterLink to="/">
+        <img style="height: 3rem;" :src="logoSrc" alt="Il Dentista Migliore Logo">
+      </RouterLink>
+    </div>
+    <div class="card-body p-4">
+      <h1 class="card-title text-center mb-4">Invia di Nuovo l'Email</h1>
+      <p class="text-muted text-center mb-4">Non hai ricevuto l'email? Inserisci il tuo indirizzo qui sotto per riceverne una nuova.</p>
+      <Form @submit="handleResend" :validation-schema="schema" v-slot="{ errors }">
+        <div class="mb-3">
+          <label for="email" class="form-label">Il Tuo Indirizzo Email</label>
+          <Field name="email" type="email" class="form-control" :class="{'is-invalid': errors.email}" id="email" required :disabled="isLoading" />
+          <ErrorMessage name="email" class="text-danger small" />
         </div>
-      </div>
+        <button type="submit" class="btn btn-primary w-100" :disabled="isLoading">
+          <span v-if="isLoading" class="spinner-border spinner-border-sm"></span>
+          <span v-else>Invia di Nuovo il Link</span>
+        </button>
+         <div class="text-center mt-3">
+          <RouterLink to="/login">Torna al Login</RouterLink>
+        </div>
+      </Form>
     </div>
   </div>
 </template>

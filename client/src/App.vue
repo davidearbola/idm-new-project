@@ -2,11 +2,13 @@
 import { computed } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import PublicLayout from './layouts/PublicLayout.vue'
+import AuthLayout from './layouts/AuthLayout.vue'
 
 const route = useRoute()
 
 const layouts = {
   PublicLayout,
+  AuthLayout
 }
 
 const layout = computed(() => {

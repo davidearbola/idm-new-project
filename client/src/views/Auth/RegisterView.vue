@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
+import logoSrc from '@/assets/images/logo-IDM.png'
 
 const authStore = useAuthStore();
 const { isLoading } = storeToRefs(authStore);
@@ -39,44 +40,43 @@ const handleRegister = async (values, { resetForm }) => {
 </script>
 
 <template>
-    <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-    <div class="card shadow-sm">
-        <div class="card-body">
-        <h1 class="card-title text-center mb-4">Crea un Account</h1>
-
-        <Form @submit="handleRegister" :validation-schema="schema" v-slot="{ errors }">
-            <div class="mb-3">
-              <label for="name" class="form-label">Nome</label>
-              <Field name="name" type="text" class="form-control" :class="{'is-invalid': errors.name}" id="name" required :disabled="isLoading" />
-              <ErrorMessage name="name" class="text-danger small" />
-            </div>
-
-            <div class="mb-3">
-              <label for="email" class="form-label">Indirizzo Email</label>
-              <Field name="email" type="email" class="form-control" :class="{'is-invalid': errors.email}" id="email" required :disabled="isLoading" />
-              <ErrorMessage name="email" class="text-danger small" />
-            </div>
-
-            <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
-              <Field name="password" type="password" class="form-control" :class="{'is-invalid': errors.password}" id="password" required :disabled="isLoading" />
-              <ErrorMessage name="password" class="text-danger small" />
-            </div>
-
-            <div class="mb-3">
-              <label for="password_confirmation" class="form-label">Conferma Password</label>
-              <Field name="password_confirmation" type="password" class="form-control" :class="{'is-invalid': errors.password_confirmation}" id="password_confirmation" required :disabled="isLoading" />
-              <ErrorMessage name="password_confirmation" class="text-danger small" />
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100" :disabled="isLoading">
-              <span v-if="isLoading" class="spinner-border spinner-border-sm"></span>
-              <span v-else>Registrati</span>
-            </button>
-        </Form>
+  <div class="card border-0">
+    <div class="card-header text-center py-3">
+      <RouterLink to="/">
+        <img style="height: 3rem;" :src="logoSrc" alt="Il Dentista Migliore Logo">
+      </RouterLink>
+    </div>
+    <div class="card-body p-4">
+      <h1 class="card-title text-center mb-4">Crea un Account</h1>
+      <Form @submit="handleRegister" :validation-schema="schema" v-slot="{ errors }">
+        <div class="mb-3">
+          <label for="name" class="form-label">Nome</label>
+          <Field name="name" type="text" class="form-control" :class="{'is-invalid': errors.name}" id="name" required :disabled="isLoading" />
+          <ErrorMessage name="name" class="text-danger small" />
         </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">Indirizzo Email</label>
+          <Field name="email" type="email" class="form-control" :class="{'is-invalid': errors.email}" id="email" required :disabled="isLoading" />
+          <ErrorMessage name="email" class="text-danger small" />
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <Field name="password" type="password" class="form-control" :class="{'is-invalid': errors.password}" id="password" required :disabled="isLoading" />
+          <ErrorMessage name="password" class="text-danger small" />
+        </div>
+        <div class="mb-3">
+          <label for="password_confirmation" class="form-label">Conferma Password</label>
+          <Field name="password_confirmation" type="password" class="form-control" :class="{'is-invalid': errors.password_confirmation}" id="password_confirmation" required :disabled="isLoading" />
+          <ErrorMessage name="password_confirmation" class="text-danger small" />
+        </div>
+        <button type="submit" class="btn btn-primary w-100" :disabled="isLoading">
+          <span v-if="isLoading" class="spinner-border spinner-border-sm"></span>
+          <span v-else>Registrati</span>
+        </button>
+        <div class="text-center mt-3">
+            <p class="text-muted">Hai già un account? <RouterLink to="/login">Accedi</RouterLink></p>
+        </div>
+      </Form>
     </div>
-    </div>
-</div>
+  </div>
 </template>
