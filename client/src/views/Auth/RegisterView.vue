@@ -5,7 +5,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
-import logoSrc from '@/assets/images/logo-IDM.png'
 
 const authStore = useAuthStore();
 const { isLoading } = storeToRefs(authStore);
@@ -41,11 +40,6 @@ const handleRegister = async (values, { resetForm }) => {
 
 <template>
   <div class="card border-0">
-    <div class="card-header text-center py-3">
-      <RouterLink to="/">
-        <img style="height: 3rem;" :src="logoSrc" alt="Il Dentista Migliore Logo">
-      </RouterLink>
-    </div>
     <div class="card-body p-4">
       <h1 class="card-title text-center mb-4">Crea un Account</h1>
       <Form @submit="handleRegister" :validation-schema="schema" v-slot="{ errors }">

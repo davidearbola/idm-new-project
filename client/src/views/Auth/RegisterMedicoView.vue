@@ -2,7 +2,6 @@
 import { ref, reactive } from 'vue';
 import { Form, Field, ErrorMessage } from 'vee-validate';
 import * as yup from 'yup';
-import logoSrc from '@/assets/images/logo-IDM.png'
 import { useAuthStore } from '@/stores/authStore';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'vue-toastification';
@@ -45,6 +44,7 @@ const schemaStep2 = yup.object({
   provincia: yup.string().required('La provincia è obbligatoria').length(2, 'La sigla della provincia deve essere di 2 lettere'),
 });
 
+
 const nextStep = () => {
   if (currentStep.value < 3) {
     currentStep.value++;
@@ -60,24 +60,18 @@ const prevStep = () => {
 const handleRegister = async () => {
     const response = await authStore.registerMedico(formData);
     if (response.success) {
-    toast.success(response.message);
-    router.push({ name: 'login' });
-  } else {
-    toast.error(response.message);
-    resetForm({});
-  }
+        toast.success(response.message || 'Registrazione completata!');
+        router.push({ name: 'login' });
+    } else {
+        toast.error(response.message || 'Errore durante la registrazione.');
+    }
 };
 </script>
 
 <template>
-  <div class="card border-0 w-100">
-    <div class="card-header text-center py-3">
-      <RouterLink to="/">
-        <img style="height: 3rem;" :src="logoSrc" alt="Il Dentista Migliore Logo">
-      </RouterLink>
-    </div>
+  <div class="card border-0 shadow-sm w-100">
     <div class="card-body p-4 p-md-5">
-      <div class="step-progress-bar mb-5">
+      <div class="step-progress-bar mt-3 mb-5">
         <div class="step" :class="{ 'active': currentStep >= 1, 'completed': currentStep > 1 }">
           <div class="step-icon">1</div>
           <p class="d-none d-md-block">Dati Accesso</p>

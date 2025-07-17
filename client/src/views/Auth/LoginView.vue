@@ -6,7 +6,6 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import * as yup from 'yup'
 import { Form, Field, ErrorMessage } from 'vee-validate'
-import logoSrc from '@/assets/images/logo-IDM.png'
 
 const authStore = useAuthStore()
 const { isLoading } = storeToRefs(authStore)
@@ -42,11 +41,6 @@ const handleLogin = async (values, { resetForm }) => {
 
 <template>
   <div class="card border-0">
-    <div class="card-header text-center py-3">
-      <RouterLink to="/">
-        <img style="height: 3rem;" :src="logoSrc" alt="Il Dentista Migliore Logo">
-      </RouterLink>
-    </div>
     <div class="card-body p-4">
       <h1 class="card-title text-center mb-4">Login</h1>
       <Form @submit="handleLogin" :validation-schema="schema" v-slot="{ errors }">

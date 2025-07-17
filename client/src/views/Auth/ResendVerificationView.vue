@@ -5,7 +5,6 @@ import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import { useToast } from 'vue-toastification'
 import { useRouter } from 'vue-router'
-import logoSrc from '@/assets/images/logo-IDM.png'
 
 const router = useRouter();
 const toast = useToast();
@@ -30,11 +29,6 @@ const handleResend = async (values, { resetForm}) => {
 
 <template>
   <div class="card border-0">
-    <div class="card-header text-center py-3">
-      <RouterLink to="/">
-        <img style="height: 3rem;" :src="logoSrc" alt="Il Dentista Migliore Logo">
-      </RouterLink>
-    </div>
     <div class="card-body p-4">
       <h1 class="card-title text-center mb-4">Invia di Nuovo l'Email</h1>
       <p class="text-muted text-center mb-4">Non hai ricevuto l'email? Inserisci il tuo indirizzo qui sotto per riceverne una nuova.</p>

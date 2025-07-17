@@ -3,7 +3,6 @@ import { ref } from 'vue';
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import { useToast } from 'vue-toastification';
-import logoSrc from '@/assets/images/logo-IDM.png'
 
 const toast = useToast();
 const authStore = useAuthStore()
@@ -23,11 +22,6 @@ const handleForgotPassword = async () => {
 
 <template>
     <div class="card border-0">
-        <div class="card-header text-center py-3">
-      <RouterLink to="/">
-        <img style="height: 3rem;" :src="logoSrc" alt="Il Dentista Migliore Logo">
-      </RouterLink>
-    </div>
       <div class="card-body p-4">
         <h1 class="card-title text-center mb-4">Password Dimenticata</h1>
         <p class="text-muted text-center mb-4">Inserisci la tua email e ti invieremo un link per reimpostare la password.</p>
