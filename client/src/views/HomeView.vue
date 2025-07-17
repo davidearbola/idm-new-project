@@ -7,10 +7,10 @@ import HeroSrc from '../assets/images/sfondo-hero-idm.jpg'
 
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
-const dashboardLink = computed(() => {
-  if (!user.value) return '/login';
-  return user.value.role === 'medico' ? '/medico/dashboard' : '/paziente/dashboard';
-});
+// const dashboardLink = computed(() => {
+//   if (!user.value) return '/login';
+//   return user.value.role === 'medico' ? '/medico/dashboard' : '/paziente/dashboard';
+// });
 const heroStyle = computed(() => ({
   backgroundImage: `url(${HeroSrc})`,
 }))
@@ -105,7 +105,7 @@ const howItWorksSteps = [
         </div>
 
         <div>
-          <RouterLink :to="!user ? '/login' : dashboardLink" class="btn btn-accent btn-lg px-5 py-3 mt-3 fw-bold text-white">{{ !user ? 'Carica Preventivo Ora' : 'Vai alla tua Dashboard' }}</RouterLink>
+          <RouterLink :to="!user ? 'login' : '/dashboard'" class="btn btn-accent btn-lg px-5 py-3 mt-3 fw-bold text-white">{{ !user ? 'Carica Preventivo Ora' : 'Vai alla tua Dashboard' }}</RouterLink>
         </div>
       </div>
     </section>

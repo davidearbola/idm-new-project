@@ -23,7 +23,7 @@ const handleLogin = async (values, { resetForm }) => {
   const response = await authStore.login(values);
   if (response.success) {
     toast.success(response.message);
-    router.push({ name: 'dashboard' });
+    router.push('/dashboard');
   } else {
     if (response.status === 403) {
       isNotVerified.value = true;

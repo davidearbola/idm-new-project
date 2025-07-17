@@ -17,10 +17,10 @@ let collapseInstance = null;
 
 const isMenuOpen = ref(false);
 
-const dashboardLink = computed(() => {
-  if (!user.value) return '/login';
-  return user.value.role === 'medico' ? '/medico/dashboard' : '/paziente/dashboard';
-});
+// const dashboardLink = computed(() => {
+//   if (!user.value) return '/login';
+//   return user.value.role === 'medico' ? '/medico/dashboard' : '/paziente/dashboard';
+// });
 
 const closeMenu = () => {
   if (collapseInstance && collapseMenuRef.value) {
@@ -110,7 +110,7 @@ watch(() => route.path, () => {
           </template>
           <template v-else>
             <li class="nav-item ms-lg-2">
-              <RouterLink class="btn btn-accent btn-sm" :to="dashboardLink">Area Personale</RouterLink>
+              <RouterLink class="btn btn-accent btn-sm" to="/dashboard">Area Personale</RouterLink>
             </li>
             <li class="nav-item ms-lg-2">
               <button type="button" class="btn btn-primary btn-sm" @click.stop="logout">Logout</button>
