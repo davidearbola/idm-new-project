@@ -58,6 +58,26 @@ export const useAuthStore = defineStore('auth', {
         this.isLoading = false
       }
     },
+
+    async registerMedico(userInfo) {
+      this.isLoading = true
+      try {
+        const response = await axios.post('/api/register-medico', userInfo)
+        return response.data
+      } catch (error) {
+        if (error.response && error.response.status === 422) {
+          const errors = error.response.data.errors
+          const firstErrorMessage = errors[Object.keys(errors)[0]][0]
+          return { success: false, message: firstErrorMessage }
+        }
+        return {
+          success: false,
+          message: 'Si è verificato un errore imprevisto durante la registrazione. Riprova!',
+        }
+      } finally {
+        this.isLoading = false
+      }
+    },
     async logout() {
       this.isLoading = true
       try {

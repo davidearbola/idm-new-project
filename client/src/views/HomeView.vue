@@ -146,7 +146,7 @@ const howItWorksSteps = [
               aumenta il numero di pazienti senza sforzo. Concentrati sul tuo lavoro, alla
               burocrazia pensiamo noi.
             </p>
-            <RouterLink to="/register" class="btn btn-primary btn-lg">Registra il Tuo Studio</RouterLink>
+            <RouterLink to="/register-medico" class="btn btn-primary btn-lg">Registra il Tuo Studio</RouterLink>
           </div>
         </div>
       </div>

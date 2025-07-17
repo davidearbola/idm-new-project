@@ -21,8 +21,8 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var list<string>
      */
     protected $fillable = [
-        'role',
         'name',
+        'role',
         'email',
         'password',
     ];
@@ -59,5 +59,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendEmailVerificationNotification()
     {
         $this->notify(new CustomVerifyEmail);
+    }
+
+    public function anagraficaMedico()
+    {
+        return $this->hasOne(AnagraficaMedico::class);
     }
 }

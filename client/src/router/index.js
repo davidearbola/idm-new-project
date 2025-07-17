@@ -29,6 +29,12 @@ const router = createRouter({
       meta: { layout: 'AuthLayout' },
     },
     {
+      path: '/register-medico',
+      name: 'register-medico',
+      component: () => import('../views/Auth/RegisterMedicoView.vue'),
+      meta: { layout: 'AuthLayout' },
+    },
+    {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('../views/DashboardView.vue'),

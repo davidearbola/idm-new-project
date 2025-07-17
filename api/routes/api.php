@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\EmailVerificationController;
 // Rotte Pubbliche
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register-medico', [AuthController::class, 'registerMedico']);
 
 // Rotte Protette
 Route::middleware('auth:sanctum')->group(function () {
