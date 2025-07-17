@@ -18,6 +18,7 @@ export const useAuthStore = defineStore('auth', {
         const response = await axios.post('/api/login', credentials)
         if (response.data.success) {
           this.user = response.data.user
+          await this.getUser()
           return {
             success: true,
             message: 'Login effettuato con successo!',

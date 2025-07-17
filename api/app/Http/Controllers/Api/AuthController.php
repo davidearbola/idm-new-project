@@ -145,6 +145,15 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
-        return $request->user();
+        $user = $request->user();
+        if ($user->role === 'paziente') {
+            $user->load('anagraficaPaziente');
+        }
+
+        if ($user->role === 'medico') {
+            $user->load('anagraficaMedico');
+        }
+
+        return response()->json($user);
     }
 }
