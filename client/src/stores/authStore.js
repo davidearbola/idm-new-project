@@ -166,5 +166,31 @@ export const useAuthStore = defineStore('auth', {
         this.isLoading = false
       }
     },
+    async updateEmail(newEmail) {
+      this.isLoading = true
+      try {
+        const response = await axios.put('/api/impostazioni/email', { email: newEmail })
+        this.user = null
+        this.isAuthCheckCompleted = false
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        return { success: false, message: error.response?.data?.message || 'Errore' }
+      } finally {
+        this.isLoading = false
+      }
+    },
+    async updatePassword(passwords) {
+      this.isLoading = true
+      try {
+        const response = await axios.put('/api/impostazioni/password', passwords)
+        this.user = null
+        this.isAuthCheckCompleted = false
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        return { success: false, message: error.response?.data?.message || 'Errore' }
+      } finally {
+        this.isLoading = false
+      }
+    },
   },
 })

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\ImpostazioniUtenteController;
 use App\Http\Controllers\Api\PreventivoController;
 
 // Rotte Pubbliche
@@ -17,6 +18,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/preventivi', [PreventivoController::class, 'store']);
+    Route::prefix('impostazioni')->group(function () {
+        Route::post('/anagrafica', [ImpostazioniUtenteController::class, 'updateAnagrafica']);
+        Route::put('/email', [ImpostazioniUtenteController::class, 'updateEmail']);
+        Route::put('/password', [ImpostazioniUtenteController::class, 'updatePassword']);
+    });
 });
 
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail']);
