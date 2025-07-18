@@ -6,6 +6,7 @@ import { storeToRefs } from 'pinia';
 import { useToast } from 'vue-toastification';
 import logoSrc from '@/assets/images/logo-IDM.png';
 import logoFaviconSrc from '@/assets/images/logo-IDM-favicon.png';
+import { useUiStore } from '@/stores/uiStore';
 
 const router = useRouter();
 const toast = useToast();
@@ -14,7 +15,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['toggle-sidebar']);
-
+const uiStore = useUiStore();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
@@ -32,6 +33,11 @@ const linksMedico = [
 const menuLinks = computed(() => user.value?.role === 'medico' ? linksMedico : linksPaziente);
 
 const handleLogout = async () => {
+  if (uiStore.hasUnsavedChanges) {
+    if (!window.confirm('Hai delle modifiche non salvate. Sei sicuro di voler effettuare il logout?')) {
+      return; 
+    }
+  }
   const response = await authStore.logout();
   if (!response.success) {
     toast.error(response.message);

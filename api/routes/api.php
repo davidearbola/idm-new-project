@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\ImpostazioniUtenteController;
+use App\Http\Controllers\Api\ListinoController;
 use App\Http\Controllers\Api\PreventivoController;
 
 // Rotte Pubbliche
@@ -22,6 +23,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/anagrafica', [ImpostazioniUtenteController::class, 'updateAnagrafica']);
         Route::put('/email', [ImpostazioniUtenteController::class, 'updateEmail']);
         Route::put('/password', [ImpostazioniUtenteController::class, 'updatePassword']);
+    });
+    Route::prefix('listino')->group(function () {
+        Route::get('/', [ListinoController::class, 'index']);
+        Route::post('/master', [ListinoController::class, 'updateMasterItem']);
+        Route::post('/custom', [ListinoController::class, 'storeCustomItem']);
+        Route::put('/custom/{item}', [ListinoController::class, 'updateCustomItem']);
+        Route::delete('/custom/{item}', [ListinoController::class, 'destroyCustomItem']);
     });
 });
 

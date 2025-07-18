@@ -1,13 +1,7 @@
-// import 'bootstrap/dist/css/bootstrap.min.css';
 import './assets/scss/_variables.scss'
-import 'bootstrap/dist/js/bootstrap.js'
-import 'bootstrap'
-
 import Toast from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
-
 import './assets/main.css'
-
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
