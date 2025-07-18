@@ -80,4 +80,14 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(ListinoMedicoCustomItem::class, 'medico_user_id');
     }
+
+    public function fotoStudi()
+    {
+        return $this->hasMany(FotoStudio::class, 'medico_user_id');
+    }
+
+    public function staff()
+    {
+        return $this->hasMany(StaffMedico::class, 'medico_user_id');
+    }
 }

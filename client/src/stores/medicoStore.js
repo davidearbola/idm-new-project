@@ -3,8 +3,9 @@ import axios from 'axios'
 import { useAuthStore } from './authStore'
 
 export const useMedicoStore = defineStore('medico', {
-  state: () => ({ isLoading: false, listino: [] }),
+  state: () => ({ isLoading: false, profilo: null, listino: [] }),
   actions: {
+    // ---- Anagrafica -----
     async updateAnagrafica(data) {
       this.isLoading = true
       try {
@@ -18,6 +19,7 @@ export const useMedicoStore = defineStore('medico', {
         this.isLoading = false
       }
     },
+    // ---- Listino -----
     // Carica il listino completo del medico
     async fetchListino() {
       this.isLoading = true
@@ -88,6 +90,108 @@ export const useMedicoStore = defineStore('medico', {
           success: false,
           message: error.response?.data?.message || "Errore durante l'eliminazione.",
         }
+      } finally {
+        this.isLoading = false
+      }
+    },
+    // --- Profilo ---
+    async fetchProfilo() {
+      this.isLoading = true
+      try {
+        const response = await axios.get('/api/profilo-medico')
+        this.profilo = {
+          anagrafica: response.data.anagrafica_medico,
+          fotoStudi: response.data.foto_studi,
+          staff: response.data.staff,
+        }
+        return { success: true }
+      } catch (error) {
+        return { success: false, message: 'Errore nel caricamento del profilo.' }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async updateDescrizione(descrizione) {
+      this.isLoading = true
+      try {
+        const response = await axios.post('/api/profilo-medico/descrizione', { descrizione })
+        await this.fetchProfilo()
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        return { success: false, message: error.response?.data?.message || 'Errore' }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async uploadFotoStudio(formData) {
+      this.isLoading = true
+      try {
+        const response = await axios.post('/api/profilo-medico/foto-studio', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        await this.fetchProfilo()
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        return { success: false, message: error.response?.data?.message || 'Errore' }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async deleteFotoStudio(fotoId) {
+      this.isLoading = true
+      try {
+        const response = await axios.delete(`/api/profilo-medico/foto-studio/${fotoId}`)
+        await this.fetchProfilo()
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        return { success: false, message: "Errore durante l'eliminazione della foto." }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async createStaff(formData) {
+      this.isLoading = true
+      try {
+        const response = await axios.post('/api/profilo-medico/staff', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        await this.fetchProfilo()
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        return { success: false, message: error.response?.data?.message || 'Errore' }
+      } finally {
+        this.isLoading = false
+      }
+    },
+    async updateStaff(staffId, formData) {
+      this.isLoading = true
+      try {
+        // FormData gestisce correttamente l'invio di file e dati
+        const response = await axios.post(`/api/profilo-medico/staff/${staffId}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          params: { _method: 'PUT' }, // Workaround per file e metodo PUT
+        })
+        await this.fetchProfilo()
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        return { success: false, message: error.response?.data?.message || 'Errore' }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async deleteStaff(staffId) {
+      this.isLoading = true
+      try {
+        const response = await axios.delete(`/api/profilo-medico/staff/${staffId}`)
+        await this.fetchProfilo()
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        return { success: false, message: "Errore durante l'eliminazione." }
       } finally {
         this.isLoading = false
       }

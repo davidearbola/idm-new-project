@@ -16,6 +16,7 @@ class AnagraficaMedico extends Model
         'citta',
         'cap',
         'provincia',
+        'descrizione',
         'lat',
         'lng',
         'user_id',

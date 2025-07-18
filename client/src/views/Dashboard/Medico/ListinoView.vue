@@ -53,7 +53,6 @@ const handleUpdateCustomItem = async (item) => {
 };
 
 const handleDeleteCustomItem = async (item) => {
-  console.log(item);
     if (window.confirm(`Sei sicuro di voler eliminare la voce "${item.nome}"?`)) {
         const { success, message } = await medicoStore.deleteCustomItem(item.id);
         if(success) {
@@ -82,7 +81,6 @@ onMounted(async () => {
   initialState.value = JSON.stringify(listinoLocale.value);
   uiStore.clearUnsavedChanges();
   window.addEventListener('beforeunload', handleBeforeUnload);
-  console.log(listinoLocale.value);
 });
 
 onUnmounted(() => {
@@ -105,7 +103,6 @@ const aggiungiVoceLocalmente = (values, { resetForm }) => {
     is_active: true,
     isNew: true, 
   });
-  console.log(listinoLocale.value);
   resetForm();
 };
 

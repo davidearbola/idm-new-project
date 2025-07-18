@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\ImpostazioniUtenteController;
 use App\Http\Controllers\Api\ListinoController;
 use App\Http\Controllers\Api\PreventivoController;
+use App\Http\Controllers\Api\ProfiloMedicoController;
 
 // Rotte Pubbliche
 Route::post('/register', [AuthController::class, 'register']);
@@ -30,6 +31,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/custom', [ListinoController::class, 'storeCustomItem']);
         Route::put('/custom/{item}', [ListinoController::class, 'updateCustomItem']);
         Route::delete('/custom/{item}', [ListinoController::class, 'destroyCustomItem']);
+    });
+    Route::prefix('profilo-medico')->group(function () {
+        Route::get('/', [ProfiloMedicoController::class, 'index']);
+        Route::post('/descrizione', [ProfiloMedicoController::class, 'updateDescrizione']);
+        Route::post('/foto-studio', [ProfiloMedicoController::class, 'uploadFotoStudio']);
+        Route::delete('/foto-studio/{foto}', [ProfiloMedicoController::class, 'destroyFotoStudio']);
+        Route::post('/staff', [ProfiloMedicoController::class, 'storeStaff']);
+        Route::put('/staff/{staff}', [ProfiloMedicoController::class, 'updateStaff']);
+        Route::delete('/staff/{staff}', [ProfiloMedicoController::class, 'destroyStaff']);
     });
 });
 
