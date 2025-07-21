@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\FotoStudio;
 use App\Models\StaffMedico;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -32,7 +33,9 @@ class ProfiloMedicoController extends Controller
             'descrizione' => 'required|string|min:50',
         ]);
 
-        Auth::user()->anagraficaMedico()->update($validated);
+        $medico = Auth::user();
+        $medico->anagraficaMedico()->update($validated);
+        $this->checkProfiloCompletion($medico);
 
         return response()->json(['success' => true, 'message' => 'Descrizione aggiornata con successo.']);
     }
@@ -54,6 +57,8 @@ class ProfiloMedicoController extends Controller
 
         $foto = $medico->fotoStudi()->create(['file_path' => $filePath]);
 
+        $this->checkProfiloCompletion($medico);
+
         return response()->json([
             'success' => true,
             'message' => 'Foto caricata con successo.',
@@ -74,6 +79,8 @@ class ProfiloMedicoController extends Controller
         Storage::disk('public')->delete($foto->file_path);
         // Elimina il record dal database
         $foto->delete();
+
+        $this->checkProfiloCompletion(Auth::user());
 
         return response()->json(['success' => true, 'message' => 'Foto eliminata.']);
     }
@@ -104,6 +111,8 @@ class ProfiloMedicoController extends Controller
             'esperienza' => $validated['esperienza'],
             'foto_path' => $filePath,
         ]);
+
+        $this->checkStaffCompletion($medico);
 
         return response()->json([
             'success' => true,
@@ -165,6 +174,36 @@ class ProfiloMedicoController extends Controller
         }
         Storage::disk('public')->delete($staff->foto_path);
         $staff->delete();
+
+        $this->checkStaffCompletion(Auth::user());
+
         return response()->json(['success' => true, 'message' => 'Membro dello staff eliminato.']);
+    }
+
+    private function checkProfiloCompletion($medico)
+    {
+        $anagrafica = $medico->anagraficaMedico;
+        $isComplete = $anagrafica->descrizione && $medico->fotoStudi()->count() >= 3;
+
+        // Se i requisiti sono soddisfatti E lo step non era completo, lo segno come completato.
+        if ($isComplete && !$anagrafica->step_profilo_completed_at) {
+            $anagrafica->update(['step_profilo_completed_at' => Carbon::now()]);
+        }
+        // Altrimenti, se i requisiti NON sono soddisfatti E lo step ERA completo, lo resetto.
+        elseif (!$isComplete && $anagrafica->step_profilo_completed_at) {
+            $anagrafica->update(['step_profilo_completed_at' => null]);
+        }
+    }
+
+    private function checkStaffCompletion($medico)
+    {
+        $anagrafica = $medico->anagraficaMedico;
+        $isComplete = $medico->staff()->count() >= 1;
+
+        if ($isComplete && !$anagrafica->step_staff_completed_at) {
+            $anagrafica->update(['step_staff_completed_at' => Carbon::now()]);
+        } elseif (!$isComplete && $anagrafica->step_staff_completed_at) {
+            $anagrafica->update(['step_staff_completed_at' => null]);
+        }
     }
 }

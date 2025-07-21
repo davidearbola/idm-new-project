@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ListinoMaster;
 use App\Models\ListinoMedicoCustomItem;
 use App\Models\ListinoMedicoMasterItem;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -78,6 +79,8 @@ class ListinoController extends Controller
             );
         }
 
+        $this->checkListinoCompletion($medico);
+
         return response()->json(['success' => true, 'message' => 'Voci del listino aggiornate.']);
     }
 
@@ -134,5 +137,21 @@ class ListinoController extends Controller
         $item->delete();
 
         return response()->json(['success' => true, 'message' => 'Voce eliminata con successo.']);
+    }
+
+    private function checkListinoCompletion($medico)
+    {
+        $anagrafica = $medico->anagraficaMedico;
+        $vociCompletate = $medico->listinoMasterItems()
+            ->whereNotNull('prezzo')
+            ->where('is_active', true)
+            ->count();
+        $isComplete = $vociCompletate >= 3;
+
+        if ($isComplete && !$anagrafica->step_listino_completed_at) {
+            $anagrafica->update(['step_listino_completed_at' => Carbon::now()]);
+        } elseif (!$isComplete && $anagrafica->step_listino_completed_at) {
+            $anagrafica->update(['step_listino_completed_at' => null]);
+        }
     }
 }

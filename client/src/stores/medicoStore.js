@@ -51,6 +51,8 @@ export const useMedicoStore = defineStore('medico', {
         }
         await Promise.all(requests)
         await this.fetchListino()
+        const authStore = useAuthStore()
+        await authStore.getUser()
         return { success: true, message: 'Listino salvato con successo!' }
       } catch (error) {
         return {
@@ -67,6 +69,8 @@ export const useMedicoStore = defineStore('medico', {
       try {
         const response = await axios.put(`/api/listino/custom/${item.id}`, item)
         await this.fetchListino() // Ricarica per consistenza
+        const authStore = useAuthStore()
+        await authStore.getUser()
         return { success: true, message: response.data.message }
       } catch (error) {
         return {
@@ -83,7 +87,8 @@ export const useMedicoStore = defineStore('medico', {
         const response = await axios.delete(`/api/listino/custom/${itemId}`)
         const index = this.listino.findIndex((item) => item.id === itemId)
         if (index !== -1) this.listino.splice(index, 1)
-
+        const authStore = useAuthStore()
+        await authStore.getUser()
         return { success: true, message: response.data.message }
       } catch (error) {
         return {
@@ -117,6 +122,8 @@ export const useMedicoStore = defineStore('medico', {
       try {
         const response = await axios.post('/api/profilo-medico/descrizione', { descrizione })
         await this.fetchProfilo()
+        const authStore = useAuthStore()
+        await authStore.getUser()
         return { success: true, message: response.data.message }
       } catch (error) {
         return { success: false, message: error.response?.data?.message || 'Errore' }
@@ -132,6 +139,8 @@ export const useMedicoStore = defineStore('medico', {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
         await this.fetchProfilo()
+        const authStore = useAuthStore()
+        await authStore.getUser()
         return { success: true, message: response.data.message }
       } catch (error) {
         return { success: false, message: error.response?.data?.message || 'Errore' }
@@ -145,6 +154,8 @@ export const useMedicoStore = defineStore('medico', {
       try {
         const response = await axios.delete(`/api/profilo-medico/foto-studio/${fotoId}`)
         await this.fetchProfilo()
+        const authStore = useAuthStore()
+        await authStore.getUser()
         return { success: true, message: response.data.message }
       } catch (error) {
         return { success: false, message: "Errore durante l'eliminazione della foto." }
@@ -160,6 +171,8 @@ export const useMedicoStore = defineStore('medico', {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
         await this.fetchProfilo()
+        const authStore = useAuthStore()
+        await authStore.getUser()
         return { success: true, message: response.data.message }
       } catch (error) {
         return { success: false, message: error.response?.data?.message || 'Errore' }
@@ -176,6 +189,8 @@ export const useMedicoStore = defineStore('medico', {
           params: { _method: 'PUT' }, // Workaround per file e metodo PUT
         })
         await this.fetchProfilo()
+        const authStore = useAuthStore()
+        await authStore.getUser()
         return { success: true, message: response.data.message }
       } catch (error) {
         return { success: false, message: error.response?.data?.message || 'Errore' }
@@ -189,6 +204,8 @@ export const useMedicoStore = defineStore('medico', {
       try {
         const response = await axios.delete(`/api/profilo-medico/staff/${staffId}`)
         await this.fetchProfilo()
+        const authStore = useAuthStore()
+        await authStore.getUser()
         return { success: true, message: response.data.message }
       } catch (error) {
         return { success: false, message: "Errore durante l'eliminazione." }

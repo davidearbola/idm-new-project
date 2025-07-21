@@ -20,6 +20,15 @@ class AnagraficaMedico extends Model
         'lat',
         'lng',
         'user_id',
+        'step_listino_completed_at',
+        'step_profilo_completed_at',
+        'step_staff_completed_at'
+    ];
+
+    protected $casts = [
+        'step_listino_completed_at' => 'datetime',
+        'step_profilo_completed_at' => 'datetime',
+        'step_staff_completed_at' => 'datetime',
     ];
 
     public function user()

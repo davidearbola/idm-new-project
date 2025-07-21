@@ -146,7 +146,6 @@ router.beforeEach(async (to, from, next) => {
       return next({ path: '/dashboard' })
     }
   }
-
   next()
 })
 
