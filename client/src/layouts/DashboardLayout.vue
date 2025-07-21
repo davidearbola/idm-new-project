@@ -1,8 +1,11 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import DashboardSidebar from '@/components/DashboardSidebar.vue';
+import { usePazienteStore } from '@/stores/pazienteStore';
 
 const isCollapsed = ref(true);
+const pazienteStore = usePazienteStore(); 
+let pollingInterval = null;
 
 const sidebarWidth = computed(() => {
   return isCollapsed.value ? '80px' : '250px';
@@ -11,6 +14,18 @@ const sidebarWidth = computed(() => {
 const handleToggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value;
 };
+
+onMounted(() => {
+  pazienteStore.checkForNotifications();
+  
+  pollingInterval = setInterval(() => {
+    pazienteStore.checkForNotifications();
+  }, 30000); 
+});
+
+onUnmounted(() => {
+  clearInterval(pollingInterval);
+});
 </script>
 
 <template>

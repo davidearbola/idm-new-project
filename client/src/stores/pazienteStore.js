@@ -5,6 +5,7 @@ import { useAuthStore } from './authStore'
 export const usePazienteStore = defineStore('paziente', {
   state: () => ({
     isLoading: false,
+    unreadNotificationsCount: 0,
   }),
   actions: {
     /**
@@ -54,6 +55,16 @@ export const usePazienteStore = defineStore('paziente', {
         return { success: false, message: error.response?.data?.message || 'Errore' }
       } finally {
         this.isLoading = false
+      }
+    },
+
+    async checkForNotifications() {
+      try {
+        const response = await axios.get('/api/notifiche')
+        this.unreadNotificationsCount = response.data.length
+      } catch (error) {
+        console.error('Errore nel controllo delle notifiche:', error)
+        this.unreadNotificationsCount = 0
       }
     },
   },

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ImpostazioniUtenteController;
 use App\Http\Controllers\Api\ListinoController;
 use App\Http\Controllers\Api\PreventivoController;
 use App\Http\Controllers\Api\ProfiloMedicoController;
+use App\Http\Controllers\Api\NotificaController;
 
 // Rotte Pubbliche
 Route::post('/register', [AuthController::class, 'register']);
@@ -20,6 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/preventivi', [PreventivoController::class, 'store']);
+    Route::get('/notifiche', [NotificaController::class, 'index']);
     Route::prefix('impostazioni')->group(function () {
         Route::post('/anagrafica', [ImpostazioniUtenteController::class, 'updateAnagrafica']);
         Route::put('/email', [ImpostazioniUtenteController::class, 'updateEmail']);

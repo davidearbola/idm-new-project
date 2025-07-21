@@ -7,6 +7,7 @@ import { useToast } from 'vue-toastification';
 import logoSrc from '@/assets/images/logo-IDM.png';
 import logoFaviconSrc from '@/assets/images/logo-IDM-favicon.png';
 import { useUiStore } from '@/stores/uiStore';
+import { usePazienteStore } from '@/stores/pazienteStore';
 
 const router = useRouter();
 const toast = useToast();
@@ -18,6 +19,8 @@ const emit = defineEmits(['toggle-sidebar']);
 const uiStore = useUiStore();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
+const pazienteStore = usePazienteStore();
+const { unreadNotificationsCount } = storeToRefs(pazienteStore);
 
 const linksPaziente = [
   { name: 'Proposte Ricevute', path: '/dashboard/proposte', icon: 'fa-solid fa-inbox' },
@@ -60,11 +63,18 @@ const handleLogout = async () => {
       </div>
 
       <ul class="nav flex-column flex-grow-1">
-        <li v-for="link in menuLinks" :key="link.path" class="nav-item">
+        <li v-for="link in menuLinks" :key="link.path" class="nav-item position-relative">
           <RouterLink :to="link.path" class="nav-link" :title="link.name">
             <i :class="link.icon"></i>
             <span class="link-text">{{ link.name }}</span>
           </RouterLink>
+          
+          <span 
+            v-if="link.name === 'Proposte Ricevute' && unreadNotificationsCount > 0" 
+            class="notification-badge badge rounded-pill bg-danger"
+          >
+            {{ unreadNotificationsCount }}
+          </span>
         </li>
       </ul>
 
@@ -88,20 +98,30 @@ const handleLogout = async () => {
       <RouterLink v-for="link in menuLinks.slice(0, 2)" :key="link.path" :to="link.path" class="mobile-nav-item">
         <i :class="link.icon"></i>
         <span class="label">{{ link.name }}</span>
+        <span 
+          v-if="link.name === 'Proposte Ricevute' && unreadNotificationsCount > 0"
+          class="notification-badge badge rounded-pill bg-danger"
+        >
+          {{ unreadNotificationsCount }}
+        </span>
       </RouterLink>
+      
       <RouterLink v-if="menuLinks.length > 2" :to="menuLinks[2].path" class="mobile-nav-item">
           <i :class="menuLinks[2].icon"></i>
           <span class="label">{{ menuLinks[2].name }}</span>
       </RouterLink>
+
       <div v-else class="text-center">
         <RouterLink to="/dashboard" class="mobile-nav-item">
-          <img :src="logoFaviconSrc" alt="Logo" class="logo-img mobile-nav-item">
+          <img :src="logoFaviconSrc" alt="Logo" class="logo-img mobile-nav-item" style="height: 28px;">
         </RouterLink>
       </div>
+      
       <RouterLink to="/dashboard/impostazioni" class="mobile-nav-item">
         <i class="fa-solid fa-gear"></i>
         <span class="label">Impostazioni</span>
       </RouterLink>
+
       <a href="#" @click.prevent="handleLogout" class="mobile-nav-item">
         <i class="fa-solid fa-arrow-right-from-bracket"></i>
         <span class="label">Logout</span>
@@ -111,7 +131,6 @@ const handleLogout = async () => {
 </template>
 
 <style scoped>
-/* Stili invariati per la maggior parte... */
 .sidebar { flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width); background-color: white; box-shadow: 0 0 15px rgba(0,0,0,0.07); transition: width 0.3s ease; z-index: 1031; padding: 1rem 0; }
 .logo-container { padding: 0 1.5rem; margin-bottom: 2rem; height: 50px; display: flex; align-items: center; transition: padding 0.3s ease; }
 .sidebar.collapsed .logo-container { padding: 0; justify-content: center; }
@@ -126,35 +145,34 @@ const handleLogout = async () => {
 .sidebar .nav-link:hover { background-color: #f8f9fa; }
 .sidebar .nav-link.router-link-exact-active { color: var(--bs-accent); background-color: rgba(var(--bs-accent-rgb), 0.1); font-weight: 600; }
 .user-area { margin-top: auto; padding-top: 1rem; border-top: 1px solid #eee; }
-/* Stili per il nuovo toggler */
-.sidebar-toggler {
-  position: absolute;
-  top: 1rem;
-  right: -15px;
-  background-color: white;
-  border: 1px solid #eee;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  cursor: pointer;
-  transition: transform 0.3s ease;
-  opacity: 0.3;
-}
-.sidebar-toggler:hover {
-  transform: scale(1.1);
-  opacity: 1;
-}
-.sidebar.collapsed .sidebar-toggler {
-  right: -15px; /* Mantiene la posizione quando collassata */
-}
+.sidebar-toggler { position: absolute; top: 1rem; right: -15px; background-color: white; border: 1px solid #eee; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.3s ease; opacity: 0.3; }
+.sidebar-toggler:hover { transform: scale(1.1); opacity: 1; }
+.sidebar.collapsed .sidebar-toggler { right: -15px; }
 
-/* Stili Mobile (invariati) */
+/* Stili Mobile */
 .mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background-color: white; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; z-index: 1030; border-top: 1px solid #eee; }
-.mobile-nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #6c757d; font-size: 0.7rem; }
+.mobile-nav-item { position: relative; display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #6c757d; font-size: 0.7rem; }
 .mobile-nav-item i { font-size: 1.4rem; margin-bottom: 2px; }
 .mobile-nav-item.router-link-exact-active { color: var(--bs-accent); font-weight: 600; }
+
+/* --- NUOVI STILI PER IL BADGE --- */
+.notification-badge {
+    position: absolute;
+    top: 10px;
+    left: 45px; /* Posizione iniziale relativa all'icona */
+    font-size: 0.65em;
+    padding: 0.3em 0.6em;
+    transition: all 0.3s ease;
+    pointer-events: none; /* Impedisce al badge di interferire con i click */
+}
+/* Quando la sidebar è chiusa, sposta il badge */
+.sidebar.collapsed .notification-badge {
+    top: 12px;
+    left: 50px;
+}
+/* Stile per il badge su mobile */
+.mobile-nav .notification-badge {
+    top: -2px;
+    left: calc(50% + 10px);
+}
 </style>
