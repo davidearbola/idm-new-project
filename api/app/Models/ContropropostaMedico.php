@@ -32,4 +32,16 @@ class ContropropostaMedico extends Model
     {
         return $this->belongsTo(User::class, 'medico_user_id');
     }
+
+    public function anagraficaMedico()
+    {
+        return $this->hasOneThrough(
+            AnagraficaMedico::class,
+            User::class,
+            'id',
+            'user_id',
+            'medico_user_id',
+            'id'
+        );
+    }
 }

@@ -31,6 +31,15 @@ class PreventivoPaziente extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'json_preventivo' => 'array',
+    ];
+
+    /**
      * Get the anagrafica that owns the preventivo.
      */
     public function anagraficaPaziente(): BelongsTo

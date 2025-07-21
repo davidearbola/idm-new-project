@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ListinoController;
 use App\Http\Controllers\Api\PreventivoController;
 use App\Http\Controllers\Api\ProfiloMedicoController;
 use App\Http\Controllers\Api\NotificaController;
+use App\Http\Controllers\Api\PropostaController;
 
 // Rotte Pubbliche
 Route::post('/register', [AuthController::class, 'register']);
@@ -42,6 +43,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/staff', [ProfiloMedicoController::class, 'storeStaff']);
         Route::put('/staff/{staff}', [ProfiloMedicoController::class, 'updateStaff']);
         Route::delete('/staff/{staff}', [ProfiloMedicoController::class, 'destroyStaff']);
+    });
+    Route::prefix('proposte')->group(function () {
+        Route::get('/', [PropostaController::class, 'index']);
+        Route::post('/mark-as-read', [PropostaController::class, 'markAsRead']);
+        Route::post('/{proposta}/accetta', [PropostaController::class, 'accetta']);
+        Route::post('/{proposta}/rifiuta', [PropostaController::class, 'rifiuta']);
     });
 });
 

@@ -6,6 +6,8 @@ export const usePazienteStore = defineStore('paziente', {
   state: () => ({
     isLoading: false,
     unreadNotificationsCount: 0,
+    proposteNuove: [],
+    proposteArchiviate: [],
   }),
   actions: {
     /**
@@ -65,6 +67,79 @@ export const usePazienteStore = defineStore('paziente', {
       } catch (error) {
         console.error('Errore nel controllo delle notifiche:', error)
         this.unreadNotificationsCount = 0
+      }
+    },
+
+    /**
+     * Carica le proposte dal backend e le divide in 'nuove' e 'archiviate'.
+     */
+    async fetchProposte() {
+      this.isLoading = true
+      try {
+        const response = await axios.get('/api/proposte')
+        this.proposteNuove = response.data.nuove || []
+        this.proposteArchiviate = response.data.archiviate || []
+        return { success: true }
+      } catch (error) {
+        console.error('Errore nel caricamento delle proposte:', error)
+        return { success: false, message: 'Errore nel caricamento delle proposte.' }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    /**
+     * Segna le proposte nuove come lette e azzera le notifiche.
+     */
+    async markProposteComeLette() {
+      if (this.proposteNuove.length === 0) {
+        return { success: true }
+      }
+
+      const proposteIds = this.proposteNuove.map((p) => p.id)
+
+      try {
+        await axios.post('/api/proposte/mark-as-read', { proposteIds })
+        this.unreadNotificationsCount = 0
+        await this.fetchProposte()
+        return { success: true }
+      } catch (error) {
+        console.error('Errore nel segnare le proposte come lette:', error)
+        return { success: false, message: "Errore nell'aggiornamento dello stato delle proposte." }
+      }
+    },
+
+    /**
+     * Accetta una proposta.
+     * @param {number} propostaId L'ID della proposta da accettare.
+     */
+    async accettaProposta(propostaId) {
+      this.isLoading = true
+      try {
+        const response = await axios.post(`/api/proposte/${propostaId}/accetta`)
+        await this.fetchProposte() // Ricarica per aggiornare lo stato
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        return { success: false, message: "Errore durante l'accettazione della proposta." }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    /**
+     * Rifiuta una proposta.
+     * @param {number} propostaId L'ID della proposta da rifiutare.
+     */
+    async rifiutaProposta(propostaId) {
+      this.isLoading = true
+      try {
+        const response = await axios.post(`/api/proposte/${propostaId}/rifiuta`)
+        await this.fetchProposte() // Ricarica per aggiornare lo stato
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        return { success: false, message: 'Errore durante il rifiuto della proposta.' }
+      } finally {
+        this.isLoading = false
       }
     },
   },
