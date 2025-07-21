@@ -90,4 +90,14 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(StaffMedico::class, 'medico_user_id');
     }
+
+    public function notifiche()
+    {
+        return $this->hasMany(Notifica::class);
+    }
+
+    public function controproposte()
+    {
+        return $this->hasMany(ContropropostaMedico::class, 'medico_user_id');
+    }
 }

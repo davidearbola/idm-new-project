@@ -37,4 +37,9 @@ class PreventivoPaziente extends Model
     {
         return $this->belongsTo(AnagraficaPaziente::class);
     }
+
+    public function controproposte()
+    {
+        return $this->hasMany(ContropropostaMedico::class);
+    }
 }

@@ -91,8 +91,8 @@ class ProcessPreventivo implements ShouldQueue
                 'stato_elaborazione' => 'completato'
             ]);
 
-            // 5. Lancia il prossimo job (per ora commentato)
-            // GeneraControproposte::dispatch($this->preventivo);
+            // 5. Lancia il prossimo job 
+            GeneraControproposte::dispatch($this->preventivo);
 
         } catch (\Exception $e) {
             $this->preventivo->update(['stato_elaborazione' => 'errore']);
