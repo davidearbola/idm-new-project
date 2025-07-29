@@ -30,11 +30,13 @@ class ResetPasswordNotification extends Notification
                '&email=' . urlencode($notifiable->getEmailForPasswordReset());
 
         return (new MailMessage)
+            ->greeting('Ciao!')
                     ->subject('Notifica di Reset Password')
                     ->line('Stai ricevendo questa email perché abbiamo ricevuto una richiesta di reset password per il tuo account.')
                     ->action('Reset Password', $url)
                     ->line('Questo link di reset scadrà tra 60 minuti.')
-                    ->line('Se non hai richiesto tu il reset della password, non è richiesta alcuna ulteriore azione.');
+            ->line('Se non hai richiesto tu il reset della password, non è richiesta alcuna ulteriore azione.')
+            ->salutation('Grazie');
     }
 
     public function toArray($notifiable)

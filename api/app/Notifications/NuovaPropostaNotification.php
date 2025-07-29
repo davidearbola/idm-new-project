@@ -36,6 +36,7 @@ class NuovaPropostaNotification extends Notification implements ShouldQueue
                     ->line('Una buona notizia! Lo studio medico "' . $medico->anagraficaMedico->ragione_sociale . '" ti ha inviato una nuova proposta.')
                     ->line('Accedi alla piattaforma per visualizzare i dettagli e confrontarla con le altre.')
                     ->action('Vedi le tue proposte', $url)
-                    ->line('Grazie per usare la nostra piattaforma!');
+            ->line('Grazie per usare la nostra piattaforma!')
+            ->salutation('A presto,');
     }
 }

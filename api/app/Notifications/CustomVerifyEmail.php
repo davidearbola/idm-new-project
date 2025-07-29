@@ -38,9 +38,11 @@ class CustomVerifyEmail extends Notification
                        '/verify-email?verify_url=' . urlencode($backendVerificationUrl);
 
         return (new MailMessage)
+            ->greeting('Ciao!')
                     ->subject('Verifica il tuo Indirizzo Email')
                     ->line('Per favore, clicca il pulsante qui sotto per verificare il tuo indirizzo email.')
                     ->action('Verifica Indirizzo Email', $frontendUrl)
-                    ->line('Se non hai creato tu questo account, non è richiesta alcuna ulteriore azione.');
+            ->line('Se non hai creato tu questo account, non è richiesta alcuna ulteriore azione.')
+            ->salutation('A presto,');
     }
 }
