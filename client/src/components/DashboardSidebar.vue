@@ -8,6 +8,7 @@ import logoSrc from '@/assets/images/logo-IDM.png';
 import logoFaviconSrc from '@/assets/images/logo-IDM-favicon.png';
 import { useUiStore } from '@/stores/uiStore';
 import { usePazienteStore } from '@/stores/pazienteStore';
+import { useMedicoStore } from '@/stores/medicoStore';
 
 const router = useRouter();
 const toast = useToast();
@@ -20,7 +21,18 @@ const uiStore = useUiStore();
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 const pazienteStore = usePazienteStore();
-const { unreadNotificationsCount } = storeToRefs(pazienteStore);
+const medicoStore = useMedicoStore();
+
+// MODIFICA QUI: Accediamo allo stato direttamente
+const unreadNotificationsCount = computed(() => {
+    if (user.value?.role === 'paziente') {
+        return pazienteStore.unreadNotificationsCount;
+    }
+    if (user.value?.role === 'medico') {
+        return medicoStore.unreadNotificationsCount;
+    }
+    return 0;
+});
 
 const linksPaziente = [
   { name: 'Proposte Ricevute', path: '/dashboard/proposte', icon: 'fa-solid fa-inbox' },
@@ -70,7 +82,7 @@ const handleLogout = async () => {
           </RouterLink>
           
           <span 
-            v-if="link.name === 'Proposte Ricevute' && unreadNotificationsCount > 0" 
+            v-if="(link.name === 'Proposte Ricevute' || link.name === 'Preventivi') && unreadNotificationsCount > 0" 
             class="notification-badge badge rounded-pill bg-danger"
           >
             {{ unreadNotificationsCount }}
@@ -95,27 +107,26 @@ const handleLogout = async () => {
     </aside>
 
     <nav class="mobile-nav d-lg-none">
-      <RouterLink v-for="link in menuLinks.slice(0, 2)" :key="link.path" :to="link.path" class="mobile-nav-item">
-        <i :class="link.icon"></i>
-        <span class="label">{{ link.name }}</span>
-        <span 
-          v-if="link.name === 'Proposte Ricevute' && unreadNotificationsCount > 0"
-          class="notification-badge badge rounded-pill bg-danger"
-        >
-          {{ unreadNotificationsCount }}
-        </span>
-      </RouterLink>
-      
-      <RouterLink v-if="menuLinks.length > 2" :to="menuLinks[2].path" class="mobile-nav-item">
-          <i :class="menuLinks[2].icon"></i>
-          <span class="label">{{ menuLinks[2].name }}</span>
-      </RouterLink>
-
-      <div v-else class="text-center">
-        <RouterLink to="/dashboard" class="mobile-nav-item">
-          <img :src="logoFaviconSrc" alt="Logo" class="logo-img mobile-nav-item" style="height: 28px;">
+      <template v-if="user?.role === 'paziente'">
+        <RouterLink v-for="link in menuLinks" :key="link.path" :to="link.path" class="mobile-nav-item">
+          <i :class="link.icon"></i>
+          <span class="label">{{ link.name }}</span>
+          <span v-if="link.name === 'Proposte Ricevute' && unreadNotificationsCount > 0" class="notification-badge badge rounded-pill bg-danger">
+            {{ unreadNotificationsCount }}
+          </span>
         </RouterLink>
-      </div>
+        <div></div>
+      </template>
+
+      <template v-if="user?.role === 'medico'">
+         <RouterLink v-for="link in menuLinks" :key="link.path" :to="link.path" class="mobile-nav-item">
+            <i :class="link.icon"></i>
+            <span class="label">{{ link.name }}</span>
+            <span v-if="link.name === 'Preventivi' && unreadNotificationsCount > 0" class="notification-badge badge rounded-pill bg-danger">
+              {{ unreadNotificationsCount }}
+            </span>
+          </RouterLink>
+      </template>
       
       <RouterLink to="/dashboard/impostazioni" class="mobile-nav-item">
         <i class="fa-solid fa-gear"></i>

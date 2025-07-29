@@ -62,7 +62,7 @@ export const usePazienteStore = defineStore('paziente', {
 
     async checkForNotifications() {
       try {
-        const response = await axios.get('/api/notifiche')
+        const response = await axios.get(`/api/notifiche?_=${Date.now()}`)
         this.unreadNotificationsCount = response.data.length
       } catch (error) {
         console.error('Errore nel controllo delle notifiche:', error)
@@ -99,7 +99,7 @@ export const usePazienteStore = defineStore('paziente', {
       const proposteIds = this.proposteNuove.map((p) => p.id)
 
       try {
-        await axios.post('/api/proposte/mark-as-read', { proposteIds })
+        await axios.post('/api/proposte/mark-as-read-paziente', { proposteIds })
         this.unreadNotificationsCount = 0
         await this.fetchProposte()
         return { success: true }

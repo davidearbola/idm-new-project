@@ -5,6 +5,13 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     // **** ROTTE PUBBLICHE ****
+    // Coming Soon
+    {
+      path: '/pazienti-coming-soon',
+      name: 'pazienti-coming-soon',
+      component: () => import('../views/PazientiComingSoonView.vue'),
+      meta: { layout: 'PublicLayout' },
+    },
     {
       path: '/',
       name: 'home',
@@ -125,6 +132,16 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
+  // Rotte da bloccare per i pazienti
+  // const patientAuthRoutes = ['register']
+
+  // 1. PRIMO CONTROLLO: Intercettiamo le rotte dei pazienti
+  // Se l'utente sta andando a una delle rotte bloccate, lo reindirizziamo e usciamo subito dalla funzione.
+  // if (patientAuthRoutes.includes(to.name)) {
+  //   return next({ name: 'pazienti-coming-soon' })
+  // }
+
+  // Se non siamo stati reindirizzati, procediamo con la logica di autenticazione esistente...
   const authStore = useAuthStore()
   if (!authStore.isAuthCheckCompleted) {
     await authStore.getUser()
@@ -133,19 +150,24 @@ router.beforeEach(async (to, from, next) => {
   const userRole = authStore.user?.role
   const requiredRoles = to.meta.roles
 
+  // 2. Se la rotta richiede autenticazione e l'utente non è loggato
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return next({ name: 'login' })
   }
 
+  // 3. Se la rotta è solo per "ospiti" (es. login) e l'utente è già loggato
   if (to.meta.requiresGuest && authStore.isAuthenticated) {
     return next({ path: '/dashboard' })
   }
 
+  // 4. Se la rotta richiede un ruolo specifico e l'utente non lo ha
   if (requiredRoles && requiredRoles.length > 0) {
     if (!userRole || !requiredRoles.includes(userRole)) {
       return next({ path: '/dashboard' })
     }
   }
+
+  // 5. Se nessuno dei controlli precedenti ha interrotto la navigazione, lasciamo proseguire l'utente.
   next()
 })
 

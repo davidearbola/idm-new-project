@@ -3,7 +3,13 @@ import axios from 'axios'
 import { useAuthStore } from './authStore'
 
 export const useMedicoStore = defineStore('medico', {
-  state: () => ({ isLoading: false, profilo: null, listino: [] }),
+  state: () => ({
+    isLoading: false,
+    profilo: null,
+    listino: [],
+    proposteAccettate: [],
+    unreadNotificationsCount: 0,
+  }),
   actions: {
     // ---- Anagrafica -----
     async updateAnagrafica(data) {
@@ -209,6 +215,45 @@ export const useMedicoStore = defineStore('medico', {
         return { success: true, message: response.data.message }
       } catch (error) {
         return { success: false, message: "Errore durante l'eliminazione." }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    // Azione per le notifiche
+    async checkForNotifications() {
+      try {
+        const response = await axios.get(`/api/notifiche?_=${Date.now()}`)
+        this.unreadNotificationsCount = response.data.length
+      } catch (error) {
+        console.error('Errore nel controllo delle notifiche medico:', error)
+        this.unreadNotificationsCount = 0
+      }
+    },
+
+    // Azione per segnare come lette tutte le notifiche
+    async markAsReadNotifications() {
+      try {
+        await axios.post('/api/notifiche-mark-as-read')
+        this.unreadNotificationsCount = 0
+        await this.fetchProposteAccettate()
+        return { success: true }
+      } catch (error) {
+        console.error('Errore nel segnare le proposte come lette:', error)
+        return { success: false, message: "Errore nell'aggiornamento dello stato delle proposte." }
+      }
+    },
+
+    // Azione per recuperare le proposte accettate
+    async fetchProposteAccettate() {
+      this.isLoading = true
+      try {
+        const response = await axios.get('/api/proposte-accettate')
+        this.proposteAccettate = response.data
+        return { success: true }
+      } catch (error) {
+        console.error('Errore nel caricamento delle proposte accettate:', error)
+        return { success: false }
       } finally {
         this.isLoading = false
       }

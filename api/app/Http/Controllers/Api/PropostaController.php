@@ -7,6 +7,7 @@ use App\Models\ContropropostaMedico;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Notifications\PropostaAccettataMedicoNotification;
 
 class PropostaController extends Controller
 {
@@ -37,21 +38,22 @@ class PropostaController extends Controller
     /**
      * Segna le proposte e le notifiche associate come lette/visualizzate.
      */
-    public function markAsRead(Request $request)
+    public function markProposteAsVisualizzate(Request $request)
     {
-        $user = Auth::user();
-
+        // Questa funzione ora si occupa SOLO di aggiornare lo stato delle proposte
         ContropropostaMedico::whereIn('id', $request->proposteIds)
             ->where('stato', 'inviata')
             ->update(['stato' => 'visualizzata']);
 
-        $user->notifiche()
+        // Ora chiamiamo la logica generica per pulire le notifiche
+        Auth::user()->notifiche()
             ->where('tipo', 'NUOVA_PROPOSTA')
             ->whereNull('letta_at')
             ->update(['letta_at' => Carbon::now()]);
 
-        return response()->json(['success' => true, 'message' => 'Proposte segnate come lette.']);
+        return response()->json(['success' => true, 'message' => 'Proposte segnate come visualizzate.']);
     }
+
 
     /**
      * Accetta una singola proposta.
@@ -63,6 +65,14 @@ class PropostaController extends Controller
         }
 
         $proposta->update(['stato' => 'accettata']);
+
+        $medico = $proposta->medico;
+        $medico->notifiche()->create([
+            'tipo' => 'PROPOSTA_ACCETTATA',
+            'messaggio' => 'Il paziente ' . $proposta->preventivoPaziente->anagraficaPaziente->user->name . ' ha accettato la tua proposta!',
+            'url_azione' => '/dashboard/preventivi-accettati'
+        ]);
+        $medico->notify(new PropostaAccettataMedicoNotification($proposta));
 
         return response()->json(['success' => true, 'message' => 'Proposta accettata con successo.']);
     }
@@ -79,5 +89,22 @@ class PropostaController extends Controller
         $proposta->update(['stato' => 'rifiutata']);
 
         return response()->json(['success' => true, 'message' => 'Proposta rifiutata.']);
+    }
+
+    public function getProposteAccettatePerMedico()
+    {
+        $medico = Auth::user();
+
+        $proposte = $medico->controproposte()
+            ->where('stato', 'accettata')
+            ->with([
+                'preventivoPaziente.anagraficaPaziente' => function ($query) {
+                    $query->with('user:id,name,email');
+                }
+            ])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return response()->json($proposte);
     }
 }

@@ -1,10 +1,16 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import DashboardSidebar from '@/components/DashboardSidebar.vue';
 import { usePazienteStore } from '@/stores/pazienteStore';
+import { useMedicoStore } from '@/stores/medicoStore';
+import { useAuthStore } from '@/stores/authStore';
+import { storeToRefs } from 'pinia';
 
 const isCollapsed = ref(true);
 const pazienteStore = usePazienteStore(); 
+const medicoStore = useMedicoStore();
+const authStore = useAuthStore();
+const { user } = storeToRefs(authStore)
 let pollingInterval = null;
 
 const sidebarWidth = computed(() => {
@@ -15,13 +21,27 @@ const handleToggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value;
 };
 
-onMounted(() => {
-  pazienteStore.checkForNotifications();
-  
-  pollingInterval = setInterval(() => {
-    pazienteStore.checkForNotifications();
-  }, 30000); 
-});
+watch(user, (newUser) => {
+  clearInterval(pollingInterval);
+
+  if (newUser) { 
+    const userRole = newUser.role;
+    let storeToPoll = null;
+
+    if (userRole === 'paziente') {
+      storeToPoll = pazienteStore;
+    } else if (userRole === 'medico') {
+      storeToPoll = medicoStore;
+    }
+
+    if (storeToPoll) {
+      storeToPoll.checkForNotifications(); 
+      pollingInterval = setInterval(() => {
+        storeToPoll.checkForNotifications();
+      }, 30000);
+    }
+  }
+}, { immediate: true });
 
 onUnmounted(() => {
   clearInterval(pollingInterval);

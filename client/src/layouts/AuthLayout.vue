@@ -1,6 +1,7 @@
 <script setup>
 import logoSrc from '@/assets/images/logo-IDM.png';
 import { RouterLink } from 'vue-router';
+import HeroSrc from '../assets/images/sfondo-hero-idm.jpg'
 </script>
 
 <template>
@@ -24,7 +25,7 @@ import { RouterLink } from 'vue-router';
 
         <div class="col-lg-6 d-none d-lg-block image-column">
           <img 
-            src="https://images.pexels.com/photos/5409751/pexels-photo-5409751.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" 
+            :src="HeroSrc" 
             alt="Immagine descrittiva" 
             class="img-fluid"
           />

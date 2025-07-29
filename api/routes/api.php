@@ -23,6 +23,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/preventivi', [PreventivoController::class, 'store']);
     Route::get('/notifiche', [NotificaController::class, 'index']);
+    Route::post('/notifiche-mark-as-read', [NotificaController::class, 'markAsReadNotificheMedico']);
+    Route::get('/proposte-accettate', [PropostaController::class, 'getProposteAccettatePerMedico']);
     Route::prefix('impostazioni')->group(function () {
         Route::post('/anagrafica', [ImpostazioniUtenteController::class, 'updateAnagrafica']);
         Route::put('/email', [ImpostazioniUtenteController::class, 'updateEmail']);
@@ -46,7 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::prefix('proposte')->group(function () {
         Route::get('/', [PropostaController::class, 'index']);
-        Route::post('/mark-as-read', [PropostaController::class, 'markAsRead']);
+        Route::post('/mark-as-read-paziente', [PropostaController::class, 'markProposteAsVisualizzate']);
         Route::post('/{proposta}/accetta', [PropostaController::class, 'accetta']);
         Route::post('/{proposta}/rifiuta', [PropostaController::class, 'rifiuta']);
     });

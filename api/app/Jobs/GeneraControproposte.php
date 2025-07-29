@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\PreventivoPaziente;
 use App\Models\User;
 use App\Notifications\NuovaPropostaNotification;
+use App\Notifications\PropostaGenerataMedicoNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use OpenAI;
@@ -85,6 +86,9 @@ class GeneraControproposte implements ShouldQueue
                     'url_azione' => '/dashboard/proposte' // URL relativo per il frontend
                 ]);
                 $paziente->notify(new NuovaPropostaNotification($proposta));
+
+                // Invia email al medico
+                $medico->notify(new PropostaGenerataMedicoNotification($proposta));
             }
 
         } catch (\Exception $e) {
