@@ -39,13 +39,17 @@ const openDettaglioModal = (proposta) => {
 };
 
 const handleAccetta = async (propostaId) => {
-    const { success, message } = await pazienteStore.accettaProposta(propostaId);
-    if (success) toast.success(message); else toast.error(message);
+    if (window.confirm('Sei sicuro di voler accettare questa proposta? L\'azione è irreversibile e lo studio dentistico verrà notificato.')) {
+        const { success, message } = await pazienteStore.accettaProposta(propostaId);
+        if (success) toast.success(message); else toast.error(message);
+    }
 }
 
 const handleRifiuta = async (propostaId) => {
-    const { success, message } = await pazienteStore.rifiutaProposta(propostaId);
-    if (success) toast.success(message); else toast.error(message);
+    if (window.confirm('Sei sicuro di voler rifiutare questa proposta? L\'azione è irreversibile.')) {
+        const { success, message } = await pazienteStore.rifiutaProposta(propostaId);
+        if (success) toast.success(message); else toast.error(message);
+    }
 }
 
 const goToProfiloMedico = (medicoId) => {
@@ -87,8 +91,8 @@ const formatDate = (dateString) => {
             <div class="card-footer bg-light d-flex justify-content-end gap-2">
               <button class="btn btn-sm btn-outline-secondary me-2" @click="goToProfiloMedico(proposta.medico.id)">Profilo Studio</button>
               <button class="btn btn-sm btn-primary me-2" @click="openDettaglioModal(proposta)">Vedi Dettaglio</button>
-              <button class="btn btn-sm btn-success me-2" @click="handleAccetta(proposta.id)">Accetta</button>
-              <button class="btn btn-sm btn-danger" @click="handleRifiuta(proposta.id)">Rifiuta</button>
+              <button v-if="proposta.stato !== 'accettata' && proposta.stato !== 'rifiutata'" class="btn btn-sm btn-success me-2" @click="handleAccetta(proposta.id)">Accetta</button>
+              <button v-if="proposta.stato !== 'accettata' && proposta.stato !== 'rifiutata'" class="btn btn-sm btn-danger" @click="handleRifiuta(proposta.id)">Rifiuta</button>
             </div>
           </div>
         </div>
@@ -117,8 +121,8 @@ const formatDate = (dateString) => {
                 <div>
                     <button class="btn btn-sm btn-outline-secondary me-2" @click="goToProfiloMedico(proposta.medico.id)">Profilo Studio</button>
                     <button class="btn btn-sm btn-primary me-2" @click="openDettaglioModal(proposta)">Vedi Dettaglio</button>
-                    <button class="btn btn-sm btn-success me-2" @click="handleAccetta(proposta.id)">Accetta</button>
-                    <button class="btn btn-sm btn-danger" @click="handleRifiuta(proposta.id)">Rifiuta</button>
+                    <button v-if="proposta.stato !== 'accettata' && proposta.stato !== 'rifiutata'" class="btn btn-sm btn-success me-2" @click="handleAccetta(proposta.id)">Accetta</button>
+                    <button v-if="proposta.stato !== 'accettata' && proposta.stato !== 'rifiutata'" class="btn btn-sm btn-danger" @click="handleRifiuta(proposta.id)">Rifiuta</button>
                 </div>
             </div>
           </div>
