@@ -22,7 +22,8 @@ class AnagraficaMedico extends Model
         'user_id',
         'step_listino_completed_at',
         'step_profilo_completed_at',
-        'step_staff_completed_at'
+        'step_staff_completed_at',
+        'tipo_registrazione'
     ];
 
     protected $casts = [

@@ -22,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
     $middleware->alias([
             'cors' => \Illuminate\Http\Middleware\HandleCors::class,
+        'api.key' => \App\Http\Middleware\EnsureApiTokenIsValid::class,
+        'force.password.change' => \App\Http\Middleware\ForcePasswordChange::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

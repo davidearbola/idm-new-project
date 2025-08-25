@@ -119,6 +119,12 @@ const router = createRouter({
           component: () => import('../views/Dashboard/Medico/ListinoView.vue'),
           meta: { roles: ['medico'] },
         },
+        {
+          path: 'reset-password-force',
+          name: 'reset-password-force',
+          component: () => import('../views/Dashboard/Medico/ResetPasswordForceView.vue'),
+          meta: { roles: ['medico'] },
+        },
       ],
     },
   ],
@@ -133,13 +139,13 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   // Rotte da bloccare per i pazienti
-  // const patientAuthRoutes = ['register']
+  const patientAuthRoutes = ['register']
 
   // 1. PRIMO CONTROLLO: Intercettiamo le rotte dei pazienti
   // Se l'utente sta andando a una delle rotte bloccate, lo reindirizziamo e usciamo subito dalla funzione.
-  // if (patientAuthRoutes.includes(to.name)) {
-  //   return next({ name: 'pazienti-coming-soon' })
-  // }
+  if (patientAuthRoutes.includes(to.name)) {
+    return next({ name: 'pazienti-coming-soon' })
+  }
 
   // Se non siamo stati reindirizzati, procediamo con la logica di autenticazione esistente...
   const authStore = useAuthStore()

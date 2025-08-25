@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Vivisalute Api 
+    |--------------------------------------------------------------------------
+    |
+    | Questa è la secret key per le chiamata da Vivisalute Cms
+    |
+    | 
+    |
+    */
+
+    'vivisalute_api_key' => env('VIVISALUTE_API_KEY'),
 ];

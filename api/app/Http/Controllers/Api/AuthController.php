@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Notifications\WelcomeViviSaluteUser;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 
@@ -155,5 +156,52 @@ class AuthController extends Controller
         }
 
         return response()->json($user);
+    }
+
+    public function registerFromViviSalute(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:' . User::class],
+            'ragione_sociale' => ['required', 'string', 'max:255'],
+            'p_iva' => ['required', 'string', 'max:20', 'unique:' . AnagraficaMedico::class],
+            'cellulare' => ['required', 'string', 'max:20'],
+            'indirizzo' => ['required', 'string', 'max:255'],
+            'citta' => ['required', 'string', 'max:255'],
+            'cap' => ['required', 'string', 'max:10'],
+            'provincia' => ['required', 'string', 'max:255'],
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
+        ]);
+
+        $temporaryPassword = 'Vivi' . random_int(1000, 9999) . '!';
+
+        $user = User::create([
+            'role' => 'medico',
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($temporaryPassword),
+            'email_verified_at' => now(),
+        ]);
+
+        $user->anagraficaMedico()->create([
+            'tipo_registrazione' => 'vivi',
+            'ragione_sociale' => $validated['ragione_sociale'],
+            'p_iva' => $validated['p_iva'],
+            'cellulare' => $validated['cellulare'],
+            'indirizzo' => $validated['indirizzo'],
+            'citta' => $validated['citta'],
+            'cap' => $validated['cap'],
+            'provincia' => $validated['provincia'],
+            'lat' => $validated['lat'],
+            'lng' => $validated['lng'],
+        ]);
+
+        $user->notify(new WelcomeViviSaluteUser($temporaryPassword));
+
+        return response()->json([
+            'message' => 'Medico registrato con successo tramite API.',
+            'user_id' => $user->id,
+        ], 201);
     }
 }
