@@ -21,10 +21,18 @@ class NotificaController extends Controller
         return response()->json($notificheNonLette);
     }
 
+    /**
+     * Segna come lette SOLO le notifiche di tipo PROPOSTA_ACCETTATA
+     */
     public function markAsReadNotificheMedico()
     {
         $user = Auth::user();
-        $user->notifiche()->whereNull('letta_at')->update(['letta_at' => Carbon::now()]);
+
+        // --- MODIFICA QUI: Aggiungi il filtro per il tipo di notifica ---
+        $user->notifiche()
+            ->where('tipo', 'PROPOSTA_ACCETTATA') // Sii specifico sul tipo di notifica
+            ->whereNull('letta_at')
+            ->update(['letta_at' => Carbon::now()]);
 
         return response()->json(['success' => true]);
     }

@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia';
 import { Modal } from 'bootstrap';
 
 const medicoStore = useMedicoStore();
-const { proposteAccettate, isLoading, unreadNotificationsCount } = storeToRefs(medicoStore);
+const { proposteAccettate, isLoading } = storeToRefs(medicoStore);
 
 const selectedProposta = ref(null);
 const dettaglioModalRef = ref(null);
@@ -15,11 +15,7 @@ onMounted(async () => {
   if (dettaglioModalRef.value) {
     dettaglioModalInstance = new Modal(dettaglioModalRef.value);
   }
-  await medicoStore.fetchProposteAccettate();
-  if (unreadNotificationsCount > 0) {
-    medicoStore.checkForNotifications(); 
-    await medicoStore.markAsReadNotifications()
-  } 
+  await medicoStore.markAsReadNotifications();
 });
 
 const openDettaglioModal = (proposta) => {
