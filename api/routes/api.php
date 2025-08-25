@@ -41,6 +41,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/password', [ImpostazioniUtenteController::class, 'updatePassword'])->name('password');
     });
 
+    // --- NUOVA ROTTA PER PROFILO PUBBLICO ---
+    Route::get('/profilo-pubblico-medico/{medicoId}', [ProfiloMedicoController::class, 'showPublicProfile'])
+        ->where('medicoId', '[0-9]+');
+
     // --- ROTTE PROTETTE DAL CAMBIO PASSWORD OBBLIGATORIO ---
     // Tutte le funzionalità della dashboard del medico vanno qui dentro.
     Route::middleware('force.password.change')->group(function () {

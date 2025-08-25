@@ -1,16 +1,21 @@
 <script setup>
 import { onMounted, ref, reactive } from 'vue';
 import { useMedicoStore } from '@/stores/medicoStore';
+import { useAuthStore } from '@/stores/authStore';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'vue-toastification';
 import * as yup from 'yup';
 import { Form, Field, ErrorMessage } from 'vee-validate';
 import { Modal } from 'bootstrap';
+import { useRouter } from 'vue-router';
 
 // --- STORES E UTILITY ---
 const medicoStore = useMedicoStore();
+const authStore = useAuthStore();
 const { profilo, isLoading } = storeToRefs(medicoStore);
+const { user } = storeToRefs(authStore);
 const toast = useToast();
+const router = useRouter();
 
 // --- STATO LOCALE ---
 const descrizione = ref('');
@@ -42,6 +47,12 @@ onMounted(async () => {
     staffModalInstance = new Modal(staffModalRef.value);
   }
 });
+
+const goToProfiloPubblico = () => {
+    if(user.value?.id) {
+        router.push({ name: 'medico-profilo-pubblico', params: { id: user.value.id } });
+    }
+}
 
 const handleDescrizioneUpdate = async () => {
   const { success, message } = await medicoStore.updateDescrizione(descrizione.value);
@@ -117,8 +128,15 @@ const handleDeleteStaff = async (staffId) => {
 
 <template>
   <div>
-    <h1 class="display-5 fw-bold">Profilo Studio Medico</h1>
-    <p class="lead text-muted">Completa il tuo profilo per presentarti al meglio ai pazienti.</p>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="display-5 fw-bold">Profilo Studio Medico</h1>
+            <p class="lead text-muted">Completa il tuo profilo per presentarti al meglio ai pazienti.</p>
+        </div>
+        <button class="btn btn-outline-primary" @click="goToProfiloPubblico">
+            <i class="fa-solid fa-eye me-2"></i>Anteprima Profilo Pubblico
+        </button>
+    </div>
     <hr class="my-4">
 
     <div class="row">

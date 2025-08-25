@@ -6,11 +6,34 @@ export const useMedicoStore = defineStore('medico', {
   state: () => ({
     isLoading: false,
     profilo: null,
+    profiloPubblico: null,
     listino: [],
     proposteAccettate: [],
     unreadNotificationsCount: 0,
   }),
   actions: {
+    // ---- Azione per il Profilo Pubblico ----
+    async fetchProfiloPubblico(medicoId) {
+      this.isLoading = true
+      this.profiloPubblico = null // Resetta lo stato precedente
+      try {
+        const response = await axios.get(`/api/profilo-pubblico-medico/${medicoId}`)
+        this.profiloPubblico = {
+          anagrafica: response.data.anagrafica_medico,
+          fotoStudi: response.data.foto_studi,
+          staff: response.data.staff,
+        }
+        return { success: true }
+      } catch (error) {
+        const message =
+          error.response?.status === 403
+            ? 'Non hai il permesso di visualizzare questo profilo.'
+            : 'Errore nel caricamento del profilo.'
+        return { success: false, message }
+      } finally {
+        this.isLoading = false
+      }
+    },
     // ---- Anagrafica -----
     async updateAnagrafica(data) {
       this.isLoading = true

@@ -4,11 +4,13 @@ import { usePazienteStore } from '@/stores/pazienteStore';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'vue-toastification';
 import { Modal } from 'bootstrap';
+import { useRouter } from 'vue-router';
 
 // --- STORES E UTILITY ---
 const pazienteStore = usePazienteStore();
 const { proposteNuove, proposteArchiviate, isLoading } = storeToRefs(pazienteStore);
 const toast = useToast();
+const router = useRouter();
 
 // --- STATO LOCALE PER IL MODALE ---
 const selectedProposta = ref(null);
@@ -46,6 +48,11 @@ const handleRifiuta = async (propostaId) => {
     if (success) toast.success(message); else toast.error(message);
 }
 
+const goToProfiloMedico = (medicoId) => {
+    router.push({ name: 'medico-profilo-pubblico', params: { id: medicoId } });
+}
+
+
 // Funzione per formattare la data
 const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('it-IT', {
@@ -78,7 +85,7 @@ const formatDate = (dateString) => {
               </div>
             </div>
             <div class="card-footer bg-light d-flex justify-content-end gap-2">
-              <button class="btn btn-sm btn-outline-secondary disabled me-2">Profilo Studio</button>
+              <button class="btn btn-sm btn-outline-secondary me-2" @click="goToProfiloMedico(proposta.medico.id)">Profilo Studio</button>
               <button class="btn btn-sm btn-primary me-2" @click="openDettaglioModal(proposta)">Vedi Dettaglio</button>
               <button class="btn btn-sm btn-success me-2" @click="handleAccetta(proposta.id)">Accetta</button>
               <button class="btn btn-sm btn-danger" @click="handleRifiuta(proposta.id)">Rifiuta</button>
@@ -108,7 +115,7 @@ const formatDate = (dateString) => {
                     {{ proposta.stato }}
                 </span>
                 <div>
-                    <button class="btn btn-sm btn-outline-secondary disabled me-2">Profilo Studio</button>
+                    <button class="btn btn-sm btn-outline-secondary me-2" @click="goToProfiloMedico(proposta.medico.id)">Profilo Studio</button>
                     <button class="btn btn-sm btn-primary me-2" @click="openDettaglioModal(proposta)">Vedi Dettaglio</button>
                     <button class="btn btn-sm btn-success me-2" @click="handleAccetta(proposta.id)">Accetta</button>
                     <button class="btn btn-sm btn-danger" @click="handleRifiuta(proposta.id)">Rifiuta</button>

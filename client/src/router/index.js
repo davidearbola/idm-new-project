@@ -86,6 +86,13 @@ const router = createRouter({
           name: 'dashboard-impostazioni',
           component: () => import('../views/Dashboard/ImpostazioniView.vue'),
         },
+        {
+          path: '/medico-profilo/:id',
+          name: 'medico-profilo-pubblico',
+          component: () => import('../views/Dashboard/Public/ProfiloMedicoPublicView.vue'),
+          props: true, // Passa i parametri della rotta come props al componente
+          meta: { roles: ['paziente', 'medico'] }, // Accessibile da entrambi
+        },
         // Rotte Paziente
         {
           path: 'proposte',
