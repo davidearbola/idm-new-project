@@ -82,6 +82,7 @@ class ImpostazioniUtenteController extends Controller
             return response()->json(['success' => false, 'message' => 'La password attuale non è corretta.'], 422);
         }
         $user->password = Hash::make($validated['password']);
+        $user->password_changed_at = now();
         $user->save();
         Auth::guard('web')->logout();
         $request->session()->invalidate();
