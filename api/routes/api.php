@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\PreventivoController;
 use App\Http\Controllers\Api\ProfiloMedicoController;
 use App\Http\Controllers\Api\NotificaController;
 use App\Http\Controllers\Api\PropostaController;
+use App\Http\Controllers\Api\SocialiteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -114,3 +115,12 @@ Route::post('/resend-verification-email', [EmailVerificationController::class, '
 |--------------------------------------------------------------------------
 */
 Route::post('/private/register-medico', [AuthController::class, 'registerFromViviSalute'])->middleware('api.key');
+
+/*
+|--------------------------------------------------------------------------
+| Rotte per Socialite
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'authProviderRedirect']);
+Route::get('/auth/{provider}/callback', [SocialiteController::class, 'socialAuthentication']);

@@ -32,6 +32,12 @@ const router = createRouter({
       meta: { layout: 'AuthLayout', requiresGuest: true },
     },
     {
+      path: '/social-callback',
+      name: 'social-callback',
+      component: () => import('@/views/Auth/SocialCallbackView.vue'),
+      meta: { layout: 'AuthLayout', requiresGuest: true },
+    },
+    {
       path: '/register',
       name: 'register',
       component: () => import('../views/Auth/RegisterView.vue'),
@@ -148,11 +154,12 @@ router.beforeEach(async (to, from, next) => {
   // Rotte da bloccare per i pazienti
   const patientAuthRoutes = ['register']
 
+  // ************ SCOMMENTARE PER BLOCCARE REGISTRAZIONI PAZIENTI ******************
   // 1. PRIMO CONTROLLO: Intercettiamo le rotte dei pazienti
   // Se l'utente sta andando a una delle rotte bloccate, lo reindirizziamo e usciamo subito dalla funzione.
-  if (patientAuthRoutes.includes(to.name)) {
-    return next({ name: 'pazienti-coming-soon' })
-  }
+  // if (patientAuthRoutes.includes(to.name)) {
+  //   return next({ name: 'pazienti-coming-soon' })
+  // }
 
   // Se non siamo stati reindirizzati, procediamo con la logica di autenticazione esistente...
   const authStore = useAuthStore()

@@ -26,6 +26,13 @@ class PasswordResetController extends Controller
             ], 404);
         }
 
+        // Aggiungiamo questo controllo per bloccare gli utenti social.
+        if ($user->auth_provider) {
+            return response()->json([
+                'message' => 'Questo account è associato a un accesso social (' . ucfirst($user->auth_provider) . '). Per accedere, usa il login social. Non è necessaria una password.'
+            ], 422); 
+        }
+
         $token = Password::broker()->createToken($user);
         $user->notify(new ResetPasswordNotification($token));
 

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import router from '@/router'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -113,6 +114,9 @@ export const useAuthStore = defineStore('auth', {
         const response = await axios.post('/api/forgot-password', { email })
         return response.data
       } catch (error) {
+        if (error.response && error.response.status === 422) {
+          return error.response.data
+        }
         if (error.response && error.response.data) {
           return error.response.data
         }
@@ -190,6 +194,35 @@ export const useAuthStore = defineStore('auth', {
         return { success: false, message: error.response?.data?.message || 'Errore' }
       } finally {
         this.isLoading = false
+      }
+    },
+
+    /**
+     * Gestisce il login dopo essere tornati dal provider social.
+     * Salva il token e recupera i dati dell'utente.
+     */
+    async handleSocialLoginCallback(token) {
+      if (!token) {
+        // Se non c'è il token, reindirizza al login con un errore
+        router.push({ name: 'login', query: { error: 'auth_failed' } })
+        return
+      }
+
+      // Salviamo il token in localStorage (o dove preferisci)
+      localStorage.setItem('authToken', token)
+
+      // Impostiamo l'header di default di Axios per le prossime chiamate
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+      // Recuperiamo i dati dell'utente e li salviamo nello store
+      await this.getUser()
+
+      // Se l'utente è stato recuperato con successo, lo mandiamo alla sua dashboard
+      if (this.user) {
+        router.push({ name: 'dashboard-home' })
+      } else {
+        // Altrimenti, puliamo tutto e lo rimandiamo al login
+        this.logout()
       }
     },
   },

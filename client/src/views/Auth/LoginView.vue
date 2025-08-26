@@ -19,24 +19,24 @@ const schema = yup.object({
 })
 
 const handleLogin = async (values, { resetForm }) => {
-  isNotVerified.value = false;
-  const response = await authStore.login(values);
+  isNotVerified.value = false
+  const response = await authStore.login(values)
   if (response.success) {
-    toast.success(response.message);
-    router.push('/dashboard');
+    toast.success(response.message)
+    router.push('/dashboard')
   } else {
     if (response.status === 403) {
-      isNotVerified.value = true;
+      isNotVerified.value = true
     }
-    toast.error(response.message);
+    toast.error(response.message)
     resetForm({
       values: {
-        ...values, 
-        password: '', 
+        ...values,
+        password: '',
       },
-    });
+    })
   }
-};
+}
 </script>
 
 <template>
@@ -92,9 +92,20 @@ const handleLogin = async (values, { resetForm }) => {
           <span v-else>Accedi</span>
         </button>
         <div class="text-center mt-3">
-            <p class="text-muted">Non hai un account? <RouterLink to="/register">Registrati</RouterLink></p>
+          <p class="text-muted">
+            Non hai un account? <RouterLink to="/register">Registrati</RouterLink>
+          </p>
         </div>
       </Form>
+      <div class="my-4">
+        <p class="text-center fw-bold mx-3 mb-0">Oppure</p>
+      </div>
+      <div>
+        <a href="http://localhost:8000/api/auth/google/redirect" class="btn btn-danger w-100">
+          <i class="fa-brands fa-google me-2"></i> Accedi con Google
+        </a>
+      </div>
+
     </div>
   </div>
 </template>

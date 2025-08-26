@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { Form, Field, ErrorMessage } from 'vee-validate';
 import * as yup from 'yup';
 import { useToast } from 'vue-toastification';
@@ -24,6 +24,8 @@ const anagraficaPazienteData = reactive({});
 const anagraficaMedicoData = reactive({});
 const emailData = reactive({ email: '' });
 const passwordData = reactive({ current_password: '', password: '', password_confirmation: '' });
+
+const isSocialUser = computed(() => !!user.value?.auth_provider);
 
 // Popola i dati iniziali
 onMounted(() => {
@@ -142,7 +144,7 @@ const handleUpdatePassword = async () => {
        </div>
     </div>
 
-    <div class="row">
+    <div class="row" v-if="!isSocialUser">
       <div class="col-lg-6 mb-4 mb-lg-0">
         <div class="card shadow-sm h-100">
           <div class="card-header"><h5 class="mb-0">Aggiorna Email</h5></div>
