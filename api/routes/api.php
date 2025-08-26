@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\GeoController;
 use App\Http\Controllers\Api\ImpostazioniUtenteController;
 use App\Http\Controllers\Api\ListinoController;
 use App\Http\Controllers\Api\PreventivoController;
@@ -21,6 +22,10 @@ use App\Http\Controllers\Api\PropostaController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register-medico', [AuthController::class, 'registerMedico']);
+
+// --- ROTTE GEOGRAFICHE ---
+Route::get('/province', [GeoController::class, 'getProvince']);
+Route::get('/comuni/{param}', [GeoController::class, 'getComuni']);
 
 /*
 |--------------------------------------------------------------------------

@@ -13,6 +13,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(ListinoMasterSeeder::class);
+        $this->call([
+            ListinoMasterSeeder::class,
+            GeoSeeder::class,
+        ]);
     }
 }

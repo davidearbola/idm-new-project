@@ -105,9 +105,9 @@ const handleUpdatePassword = async () => {
             <div class="row g-3">
               <div class="col-md-6"><label>Cellulare</label><Field name="cellulare" v-model="anagraficaPazienteData.cellulare" class="form-control" /> <ErrorMessage name="cellulare" class="text-danger small" /></div>
               <div class="col-md-6"><label>Indirizzo</label><Field name="indirizzo" v-model="anagraficaPazienteData.indirizzo" class="form-control" /> <ErrorMessage name="indirizzo" class="text-danger small" /></div>
+              <div class="col-md-4"><label>Provincia</label><Field name="provincia" v-model="anagraficaPazienteData.provincia" class="form-control" /> <ErrorMessage name="provincia" class="text-danger small" /></div>
               <div class="col-md-5"><label>Città</label><Field name="citta" v-model="anagraficaPazienteData.citta" class="form-control" /> <ErrorMessage name="citta" class="text-danger small" /></div>
               <div class="col-md-3"><label>CAP</label><Field name="cap" v-model="anagraficaPazienteData.cap" class="form-control" /> <ErrorMessage name="cap" class="text-danger small" /></div>
-              <div class="col-md-4"><label>Provincia</label><Field name="provincia" v-model="anagraficaPazienteData.provincia" class="form-control" /> <ErrorMessage name="provincia" class="text-danger small" /></div>
             </div>
           <div class="text-end mt-3">
             <button class="btn btn-primary" :disabled="isSubmitting">
@@ -128,9 +128,9 @@ const handleUpdatePassword = async () => {
                  <div class="col-md-6"><label>Partita IVA</label><Field name="p_iva" v-model="anagraficaMedicoData.p_iva" class="form-control" /> <ErrorMessage name="p_iva" class="text-danger small" /></div>
                  <div class="col-6"><label>Indirizzo Sede</label><Field name="indirizzo" v-model="anagraficaMedicoData.indirizzo" class="form-control" /> <ErrorMessage name="indirizzo" class="text-danger small" /></div>
                 <div class="col-md-6"><label>Cellulare</label><Field name="cellulare" v-model="anagraficaMedicoData.cellulare" class="form-control" /> <ErrorMessage name="cellulare" class="text-danger small" /></div>
+                <div class="col-md-4"><label>Provincia</label><Field name="provincia" v-model="anagraficaMedicoData.provincia" class="form-control" /> <ErrorMessage name="provincia" class="text-danger small" /></div>
                  <div class="col-md-5"><label>Città</label><Field name="citta" v-model="anagraficaMedicoData.citta" class="form-control" /> <ErrorMessage name="citta" class="text-danger small" /></div>
                  <div class="col-md-3"><label>CAP</label><Field name="cap" v-model="anagraficaMedicoData.cap" class="form-control" /> <ErrorMessage name="cap" class="text-danger small" /></div>
-                 <div class="col-md-4"><label>Provincia</label><Field name="provincia" v-model="anagraficaMedicoData.provincia" class="form-control" /> <ErrorMessage name="provincia" class="text-danger small" /></div>
                </div>
                 <div class="text-end mt-3">
                    <button class="btn btn-primary" :disabled="isSubmitting">

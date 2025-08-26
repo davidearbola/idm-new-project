@@ -1,11 +1,12 @@
 <script setup>
-import { ref, reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import { Form, Field, ErrorMessage } from 'vee-validate';
 import * as yup from 'yup';
 import { useAuthStore } from '@/stores/authStore';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
+import AddressSelector from '@/components/AddressSelector.vue';
 
 const authStore = useAuthStore();
 const { isLoading } = storeToRefs(authStore);
@@ -43,7 +44,6 @@ const schemaStep2 = yup.object({
   cap: yup.string().required('Il CAP è obbligatorio').length(5, 'Il CAP deve essere di 5 cifre'),
   provincia: yup.string().required('La provincia è obbligatoria').length(2, 'La sigla della provincia deve essere di 2 lettere'),
 });
-
 
 const nextStep = () => {
   if (currentStep.value < 3) {
@@ -92,27 +92,27 @@ const handleRegister = async () => {
         <h3 class="text-center mb-4">Dati di Accesso</h3>
         <div class="row g-3">
           <div class="col-12">
-            <label for="name">Nome e Cognome</label>
+            <label class="form-label">Nome e Cognome</label>
             <Field v-model="formData.name" name="name" type="text" class="form-control" :class="{'is-invalid': errors.name}" />
             <ErrorMessage name="name" class="text-danger small" />
           </div>
           <div class="col-md-6">
-            <label for="email">Email</label>
+            <label class="form-label">Email</label>
             <Field v-model="formData.email" name="email" type="email" class="form-control" :class="{'is-invalid': errors.email}" />
             <ErrorMessage name="email" class="text-danger small" />
           </div>
           <div class="col-md-6">
-            <label for="cellulare">Cellulare</label>
+            <label class="form-label">Cellulare</label>
             <Field v-model="formData.cellulare" name="cellulare" type="tel" class="form-control" :class="{'is-invalid': errors.cellulare}" />
             <ErrorMessage name="cellulare" class="text-danger small" />
           </div>
           <div class="col-md-6">
-            <label for="password">Password</label>
+            <label class="form-label">Password</label>
             <Field v-model="formData.password" name="password" type="password" class="form-control" :class="{'is-invalid': errors.password}" />
             <ErrorMessage name="password" class="text-danger small" />
           </div>
           <div class="col-md-6">
-            <label for="password_confirmation">Conferma Password</label>
+            <label class="form-label">Conferma Password</label>
             <Field v-model="formData.password_confirmation" name="password_confirmation" type="password" class="form-control" :class="{'is-invalid': errors.password_confirmation}" />
             <ErrorMessage name="password_confirmation" class="text-danger small" />
           </div>
@@ -122,40 +122,45 @@ const handleRegister = async () => {
         </div>
       </Form>
 
-      <Form v-if="currentStep === 2" @submit="nextStep" :validation-schema="schemaStep2" v-slot="{ errors }">
+      <Form v-if="currentStep === 2" @submit="nextStep" :initial-values="formData" :validation-schema="schemaStep2" v-slot="{ errors }">
         <h3 class="text-center mb-4">Dati dello Studio Medico</h3>
-        <div class="row g-3">
+        <div class="row g-3 mb-3">
             <div class="col-md-6">
-                <label>Ragione Sociale</label>
+                <label class="form-label">Ragione Sociale</label>
                 <Field v-model="formData.ragione_sociale" name="ragione_sociale" type="text" class="form-control" :class="{'is-invalid': errors.ragione_sociale}" />
                 <ErrorMessage name="ragione_sociale" class="text-danger small" />
             </div>
             <div class="col-md-6">
-                <label>Partita IVA</label>
+                <label class="form-label">Partita IVA</label>
                 <Field v-model="formData.p_iva" name="p_iva" type="text" class="form-control" :class="{'is-invalid': errors.p_iva}" />
                 <ErrorMessage name="p_iva" class="text-danger small" />
             </div>
             <div class="col-12">
-                <label>Indirizzo</label>
+                <label class="form-label">Indirizzo</label>
                 <Field v-model="formData.indirizzo" name="indirizzo" type="text" class="form-control" :class="{'is-invalid': errors.indirizzo}" />
                 <ErrorMessage name="indirizzo" class="text-danger small" />
             </div>
-            <div class="col-md-5">
-                <label>Città</label>
-                <Field v-model="formData.citta" name="citta" type="text" class="form-control" :class="{'is-invalid': errors.citta}" />
-                <ErrorMessage name="citta" class="text-danger small" />
-            </div>
-            <div class="col-md-3">
-                <label>CAP</label>
-                <Field v-model="formData.cap" name="cap" type="text" class="form-control" :class="{'is-invalid': errors.cap}" />
+        </div>
+        
+        <AddressSelector
+            @update:province="formData.provincia = $event"
+            @update:city="formData.citta = $event"
+            @update:cap="formData.cap = $event"
+        />
+        
+        <Field name="provincia" v-model="formData.provincia" class="d-none" />
+        <Field name="citta" v-model="formData.citta" class="d-none" />
+        <ErrorMessage name="provincia" class="text-danger small d-block" />
+        <ErrorMessage name="citta" class="text-danger small d-block" />
+
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label class="form-label">CAP</label>
+                <Field name="cap" v-model="formData.cap" type="text" class="form-control" :class="{'is-invalid': errors.cap}" />
                 <ErrorMessage name="cap" class="text-danger small" />
             </div>
-            <div class="col-md-4">
-                <label>Provincia (Sigla)</label>
-                <Field v-model="formData.provincia" name="provincia" type="text" class="form-control" :class="{'is-invalid': errors.provincia}" />
-                <ErrorMessage name="provincia" class="text-danger small" />
-            </div>
         </div>
+        
         <div class="mt-4 d-flex justify-content-between">
           <button type="button" class="btn btn-secondary" @click="prevStep">Indietro</button>
           <button type="submit" class="btn btn-primary">Avanti</button>
@@ -180,6 +185,7 @@ const handleRegister = async () => {
           </button>
         </div>
       </div>
+
        <div class="text-center mt-4">
             <p class="text-muted small">Sei un paziente? <RouterLink to="/register">Registrati qui</RouterLink></p>
             <p class="text-muted small">Hai già un account? <RouterLink to="/login">Accedi</RouterLink></p>
@@ -189,6 +195,7 @@ const handleRegister = async () => {
 </template>
 
 <style scoped>
+/* Stili invariati... */
 .step-progress-bar {
   display: flex;
   align-items: flex-start;
