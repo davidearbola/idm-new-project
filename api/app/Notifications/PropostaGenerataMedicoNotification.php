@@ -28,7 +28,6 @@ class PropostaGenerataMedicoNotification extends Notification implements ShouldQ
     {
         $paziente = $this->proposta->preventivoPaziente->anagraficaPaziente->user;
         $url = config('app.frontend_url') . '/dashboard/preventivi-accettati';
-
         return (new MailMessage)
             ->subject('Nuova Proposta Automatica Generata')
             ->greeting('Buongiorno Dott. ' . $notifiable->name . ',')

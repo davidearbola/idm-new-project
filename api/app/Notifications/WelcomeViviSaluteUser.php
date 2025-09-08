@@ -36,7 +36,7 @@ class WelcomeViviSaluteUser extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $loginUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/login';
-
+        
         return (new MailMessage)
             ->subject('Benvenuto su Il Dentista Migliore!')
             ->greeting("Buongiorno Dott. {$notifiable->name},")

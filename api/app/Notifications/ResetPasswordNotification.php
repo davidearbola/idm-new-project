@@ -28,8 +28,9 @@ class ResetPasswordNotification extends Notification
         $url = env('FRONTEND_URL', 'http://localhost:5173') . 
                '/reset-password?token=' . $this->token . 
                '&email=' . urlencode($notifiable->getEmailForPasswordReset());
-
-        return (new MailMessage)
+               
+               
+               return (new MailMessage)
             ->greeting('Ciao!')
                     ->subject('Notifica di Reset Password')
                     ->line('Stai ricevendo questa email perché abbiamo ricevuto una richiesta di reset password per il tuo account.')

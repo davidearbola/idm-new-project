@@ -28,7 +28,7 @@ class PropostaAccettataMedicoNotification extends Notification implements Should
     {
         $paziente = $this->proposta->preventivoPaziente->anagraficaPaziente->user;
         $url = config('app.frontend_url') . '/dashboard/preventivi-accettati';
-
+        
         return (new MailMessage)
             ->subject('Congratulazioni! Una sua proposta è stata accettata')
             ->greeting('Buongiorno Dott. ' . $notifiable->name . ',')
