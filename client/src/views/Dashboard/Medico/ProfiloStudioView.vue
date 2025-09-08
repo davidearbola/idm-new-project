@@ -23,6 +23,7 @@ const staffModalRef = ref(null);
 let staffModalInstance = null;
 const isEditingStaff = ref(false);
 const currentStaffMember = reactive({ nome: '', ruolo: '', specializzazione: '', esperienza: '', foto: null });
+const isCompleted = ref(false)
 
 // --- SCHEMI DI VALIDAZIONE ---
 const descSchema = yup.object({
@@ -45,6 +46,9 @@ onMounted(async () => {
   descrizione.value = medicoStore.profilo?.anagrafica?.descrizione || '';
   if (staffModalRef.value) {
     staffModalInstance = new Modal(staffModalRef.value);
+  }
+  if(medicoStore.profilo.anagrafica.step_listino_completed_at && step_profilo_completed_at && step_staff_completed_at){
+    isCompleted.value = true
   }
 });
 
@@ -133,7 +137,7 @@ const handleDeleteStaff = async (staffId) => {
             <h1 class="display-5 fw-bold">Profilo Studio Medico</h1>
             <p class="lead text-muted">Completa il tuo profilo per presentarti al meglio ai pazienti.</p>
         </div>
-        <button class="btn btn-outline-primary" @click="goToProfiloPubblico">
+        <button v-if="isCompleted" class="btn btn-outline-primary" @click="goToProfiloPubblico">
             <i class="fa-solid fa-eye me-2"></i>Anteprima Profilo Pubblico
         </button>
     </div>

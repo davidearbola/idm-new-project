@@ -20,6 +20,7 @@ const schema = yup.object({
 
 const handleLogin = async (values, { resetForm }) => {
   isNotVerified.value = false
+  // values.remember = true;
   const response = await authStore.login(values)
   if (response.success) {
     toast.success(response.message)
@@ -37,6 +38,7 @@ const handleLogin = async (values, { resetForm }) => {
     })
   }
 }
+const googleAuthUrl = `${import.meta.env.VITE_API_URL}/api/auth/google/redirect`;
 </script>
 
 <template>
@@ -71,7 +73,7 @@ const handleLogin = async (values, { resetForm }) => {
           <ErrorMessage name="password" class="text-danger small" />
         </div>
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="form-check">
+          <div class="form-check ">
             <Field
               name="remember"
               class="form-check-input"
@@ -101,7 +103,7 @@ const handleLogin = async (values, { resetForm }) => {
         <p class="text-center fw-bold mx-3 mb-0">Oppure</p>
       </div>
       <div>
-        <a href="http://localhost:8000/api/auth/google/redirect" class="btn btn-danger w-100">
+        <a :href="googleAuthUrl" class="btn btn-danger w-100">
           <i class="fa-brands fa-google me-2"></i> Accedi con Google
         </a>
       </div>
