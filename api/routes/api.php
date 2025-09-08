@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\ProfiloMedicoController;
 use App\Http\Controllers\Api\NotificaController;
 use App\Http\Controllers\Api\PropostaController;
 use App\Http\Controllers\Api\SocialiteController;
+use App\Jobs\TestLogJob;
 
 /*
 |--------------------------------------------------------------------------
@@ -124,3 +125,13 @@ Route::post('/private/register-medico', [AuthController::class, 'registerFromViv
 
 Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'authProviderRedirect']);
 Route::get('/auth/{provider}/callback', [SocialiteController::class, 'socialAuthentication']);
+
+Route::get('/test-job', function () {
+    // Mette in coda il nostro job di test.
+    TestLogJob::dispatch();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Job di test aggiunto alla coda con successo. Controlla i log tra un minuto.',
+    ]);
+});
