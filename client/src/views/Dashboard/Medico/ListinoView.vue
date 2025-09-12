@@ -11,26 +11,27 @@ import { Form, Field, ErrorMessage } from 'vee-validate';
 // --- STORES E UTILITY ---
 const medicoStore = useMedicoStore();
 const uiStore = useUiStore();
-const { listino: listinoFromServer, isLoading } = storeToRefs(medicoStore);
+// MODIFICA: Recuperiamo anche le tipologie dallo store
+const { listino: listinoFromServer, tipologie: tipologieFromServer, isLoading } = storeToRefs(medicoStore);
 const toast = useToast();
 
 // --- STATO LOCALE ---
 const listinoLocale = ref([]);
+const tipologieDisponibili = ref([]); // MODIFICA: Nuovo stato per le tipologie
 const initialState = ref('');
-const nuovaVoce = reactive({ nome: '', descrizione: '', prezzo: null });
+// MODIFICA: Aggiunto id_tipologia al modello della nuova voce
+const nuovaVoce = reactive({ nome: '', descrizione: '', prezzo: null, id_tipologia: null });
 
 // --- NUOVA LOGICA PER INLINE EDITING ---
 const editingItemId = ref(null);
-let originalItemData = null; // Per il backup dei dati durante la modifica
+let originalItemData = null;
 
 const startEditing = (item) => {
-  // Salva una copia dei dati originali prima di iniziare a modificare
   originalItemData = { ...item };
   editingItemId.value = item.id;
 };
 
 const cancelEditing = (item) => {
-  // Ripristina i dati originali
   const index = listinoLocale.value.findIndex(i => i.id === item.id);
   if (index !== -1) {
     listinoLocale.value[index] = originalItemData;
@@ -40,13 +41,15 @@ const cancelEditing = (item) => {
 };
 
 const handleUpdateCustomItem = async (item) => {
+    // MODIFICA: Assicuriamoci che l'item inviato contenga id_tipologia
     const { success, message } = await medicoStore.updateCustomItem(item);
     if (success) {
         toast.success(message);
-        // La lista si aggiornerà automaticamente grazie al fetchListino nello store
+        // MODIFICA: Il fetch ora aggiornerà sia listino che tipologie
+        await medicoStore.fetchListino();
         listinoLocale.value = JSON.parse(JSON.stringify(listinoFromServer.value));
         initialState.value = JSON.stringify(listinoLocale.value);
-        editingItemId.value = null; // Esce dalla modalità modifica
+        editingItemId.value = null;
     } else {
         toast.error(message);
     }
@@ -67,17 +70,19 @@ const handleDeleteCustomItem = async (item) => {
         }
     }
 };
-// --- FINE LOGICA INLINE EDITING ---
 
+// MODIFICA: Aggiorniamo lo schema di validazione per includere la tipologia
 const schemaNuovaVoce = yup.object({
   nome: yup.string().required('Il nome è obbligatorio'),
   prezzo: yup.number().typeError('Deve essere un numero').required('Il prezzo è obbligatorio').min(0),
+  id_tipologia: yup.string().required('La tipologia è obbligatoria'),
 });
 
-// --- GESTIONE DELLO STATO E DEI SALVATAGGI (con uiStore) ---
+// --- GESTIONE DELLO STATO E DEI SALVATAGGI ---
 onMounted(async () => {
   await medicoStore.fetchListino();
   listinoLocale.value = JSON.parse(JSON.stringify(listinoFromServer.value));
+  tipologieDisponibili.value = JSON.parse(JSON.stringify(tipologieFromServer.value)); // MODIFICA: Popoliamo le tipologie
   initialState.value = JSON.stringify(listinoLocale.value);
   uiStore.clearUnsavedChanges();
   window.addEventListener('beforeunload', handleBeforeUnload);
@@ -94,14 +99,19 @@ watch(listinoLocale, (newValue) => {
 }, { deep: true });
 
 const aggiungiVoceLocalmente = (values, { resetForm }) => {
+  // MODIFICA: Troviamo il nome della tipologia per la visualizzazione immediata
+  const tipologiaSelezionata = tipologieDisponibili.value.find(t => t.id == values.id_tipologia);
+
   listinoLocale.value.push({
-    id: `temp-${Date.now()}`, 
+    id: `temp-${Date.now()}`,
     nome: values.nome,
     descrizione: values.descrizione || '',
     prezzo: values.prezzo,
+    id_tipologia: values.id_tipologia,
+    nome_tipologia: tipologiaSelezionata ? tipologiaSelezionata.nome : 'N/D',
     tipo: 'custom',
     is_active: true,
-    isNew: true, 
+    isNew: true,
   });
   resetForm();
 };
@@ -112,7 +122,13 @@ const handleSalvaListino = async () => {
 
   listinoLocale.value.forEach(item => {
     if (item.isNew) {
-      payload.customItems.push({ nome: item.nome, descrizione: item.descrizione, prezzo: item.prezzo });
+      // MODIFICA: Includiamo id_tipologia nel payload per le nuove voci
+      payload.customItems.push({
+        nome: item.nome,
+        descrizione: item.descrizione,
+        prezzo: item.prezzo,
+        id_tipologia: item.id_tipologia
+      });
     } else if (item.tipo === 'master') {
       const initialItem = initialDataMap.get(item.id);
       if (item.prezzo !== initialItem.prezzo || item.is_active !== initialItem.is_active) {
@@ -132,7 +148,7 @@ const handleSalvaListino = async () => {
   }
 };
 
-// --- GESTIONE MODIFICHE NON SALVATE (con uiStore) ---
+// --- GESTIONE MODIFICHE NON SALVATE ---
 onBeforeRouteLeave((to, from, next) => {
   if (uiStore.hasUnsavedChanges) {
     if (window.confirm('Hai delle modifiche non salvate. Sei sicuro di voler lasciare la pagina?')) {
@@ -148,7 +164,7 @@ onBeforeRouteLeave((to, from, next) => {
 const handleBeforeUnload = (event) => {
   if (uiStore.hasUnsavedChanges) {
     event.preventDefault();
-    event.returnValue = ''; 
+    event.returnValue = '';
   }
 };
 </script>
@@ -169,18 +185,27 @@ const handleBeforeUnload = (event) => {
         </div>
     </div>
     <hr class="my-4">
+
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <h5 class="card-title">Aggiungi Voce Personalizzata</h5>
-            <Form @submit="aggiungiVoceLocalmente" :validation-schema="schemaNuovaVoce" v-slot="{ errors }">
+            <Form @submit="aggiungiVoceLocalmente" :validation-schema="schemaNuovaVoce" :initial-values="nuovaVoce" v-slot="{ errors }">
             <div class="row align-items-end g-3">
-                <div class="col-md-4"><label>Nome Prestazione</label><Field name="nome" type="text" v-model="nuovaVoce.nome" class="form-control" /></div>
-                <div class="col-md-4"><label>Descrizione (Opzionale)</label><Field name="descrizione" type="text" v-model="nuovaVoce.descrizione" class="form-control" /></div>
-                <div class="col-md-2"><label>Prezzo (€)</label><Field name="prezzo" type="number" step="0.01" v-model="nuovaVoce.prezzo" class="form-control" /></div>
-                <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Aggiungi alla Tabella</button></div>
+                <div class="col-md-3"><label>Nome Prestazione</label><Field name="nome" type="text" class="form-control" /></div>
+                <div class="col-md-3"><label>Descrizione (Opzionale)</label><Field name="descrizione" type="text" class="form-control" /></div>
+                <div class="col-md-2">
+                    <label>Tipologia</label>
+                    <Field name="id_tipologia" as="select" class="form-select">
+                        <option :value="null" disabled>Seleziona...</option>
+                        <option v-for="tipo in tipologieDisponibili" :key="tipo.id" :value="tipo.id">{{ tipo.nome }}</option>
+                    </Field>
+                </div>
+                <div class="col-md-2"><label>Prezzo (€)</label><Field name="prezzo" type="number" step="0.01" class="form-control" /></div>
+                <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Aggiungi</button></div>
             </div>
-            <ErrorMessage name="nome" class="text-danger small d-block" />
+            <ErrorMessage name="nome" class="text-danger small d-block mt-1" />
             <ErrorMessage name="prezzo" class="text-danger small d-block" />
+            <ErrorMessage name="id_tipologia" class="text-danger small d-block" />
             </Form>
         </div>
     </div>
@@ -193,8 +218,7 @@ const handleBeforeUnload = (event) => {
             <tr>
               <th style="width: 5%;">Attiva</th>
               <th>Prestazione</th>
-              <th style="width: 20%;">Prezzo (€)</th>
-              <th style="width: 15%;">Tipo</th>
+              <th style="width: 20%;">Tipologia</th> <th style="width: 15%;">Prezzo (€)</th>
               <th style="width: 10%;">Azioni</th>
             </tr>
           </thead>
@@ -204,7 +228,7 @@ const handleBeforeUnload = (event) => {
                 <div class="form-check form-switch" v-if="item.tipo === 'master'"><input class="form-check-input" type="checkbox" v-model="item.is_active"></div>
               </td>
               <td>
-                <div v-if="editingItemId === item.id">
+                 <div v-if="editingItemId === item.id">
                     <input type="text" class="form-control form-control-sm mb-1" v-model="item.nome">
                     <input type="text" class="form-control form-control-sm" v-model="item.descrizione" placeholder="Descrizione">
                 </div>
@@ -212,6 +236,12 @@ const handleBeforeUnload = (event) => {
                     <p class="fw-bold mb-0">{{ item.nome }}</p>
                     <small class="text-muted" v-if="item.descrizione">{{ item.descrizione }}</small>
                 </div>
+              </td>
+              <td>
+                <select v-if="editingItemId === item.id && item.tipo === 'custom'" v-model="item.id_tipologia" class="form-select form-select-sm">
+                    <option v-for="tipo in tipologieDisponibili" :key="tipo.id" :value="tipo.id">{{ tipo.nome }}</option>
+                </select>
+                <span v-else>{{ item.nome_tipologia || 'N/D' }}</span>
               </td>
               <td>
                 <div v-if="editingItemId === item.id">
@@ -222,11 +252,7 @@ const handleBeforeUnload = (event) => {
                 </div>
               </td>
               <td>
-                <span v-if="item.tipo === 'custom'" class="badge bg-accent-soft text-accent">Personalizzata</span>
-                <span v-else class="badge bg-secondary-soft text-secondary">Globale</span>
-              </td>
-              <td>
-                <div v-if="item.tipo === 'custom' && !item.isNew">
+                 <div v-if="item.tipo === 'custom' && !item.isNew">
                     <div v-if="editingItemId === item.id" class="btn-group btn-group-sm">
                         <button class="btn btn-success" @click="handleUpdateCustomItem(item)" title="Salva"><i class="fa-solid fa-check"></i></button>
                         <button class="btn btn-secondary" @click="cancelEditing(item)" title="Annulla"><i class="fa-solid fa-xmark"></i></button>
@@ -243,7 +269,7 @@ const handleBeforeUnload = (event) => {
         </table>
       </div>
     </div>
-    
+
     <Teleport to="body">
       <div class="modal fade" id="listinoModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -255,7 +281,10 @@ const handleBeforeUnload = (event) => {
             <div class="modal-body">
               <ul class="list-group">
                   <li v-for="item in listinoLocale.filter(i => i.is_active && i.prezzo > 0)" :key="item.id" class="list-group-item d-flex justify-content-between align-items-center">
-                      {{ item.nome }}
+                      <div>
+                        {{ item.nome }}
+                        <small class="d-block text-muted">{{ item.nome_tipologia }}</small>
+                      </div>
                       <span class="fw-bold">€ {{ item.prezzo }}</span>
                   </li>
               </ul>

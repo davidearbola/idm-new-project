@@ -68,7 +68,7 @@ class ProcessPreventivo implements ShouldQueue
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'Sei un assistente che analizza il testo di un preventivo medico/dentistico e lo struttura in un file JSON. Il JSON deve avere due chiavi principali: "voci_preventivo", che è un array di oggetti, e "totale_preventivo", che è un numero. Ogni oggetto in "voci_preventivo" deve avere due chiavi: "prestazione" (stringa) e "prezzo" (numero). Il valore di "totale_preventivo" deve essere la somma matematica di tutti i valori "prezzo" presenti nell\'array. Ignora i dati del paziente e le informazioni non pertinenti alle singole prestazioni. Assicurati che il JSON sia valido.'
+                        'content' => 'Sei un assistente che analizza il testo di un preventivo medico/dentistico e lo struttura in un file JSON. Il JSON deve avere due chiavi principali: "voci_preventivo", che è un array di oggetti, e "totale_preventivo", che è un numero. Ogni oggetto in "voci_preventivo" deve avere tre chiavi: "prestazione" (stringa), "quantità" (numero) e "prezzo" (numero). Il valore di "prezzo" nelle "voci_preventivo" se è indicata la quantità deve fare una moltiplicazione del "prezzo" in base alla quantità indicata, altrimenti di default metti 1. Il valore di "totale_preventivo" deve essere la somma matematica di tutti i valori "prezzo" presenti nell\'array. Ignora i dati del paziente e le informazioni non pertinenti alle singole prestazioni. Assicurati che il JSON sia valido.'
                     ],
                     [
                         'role' => 'user',

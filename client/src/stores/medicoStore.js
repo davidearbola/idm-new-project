@@ -8,6 +8,7 @@ export const useMedicoStore = defineStore('medico', {
     profilo: null,
     profiloPubblico: null,
     listino: [],
+    tipologie: [],
     proposteAccettate: [],
     unreadNotificationsCount: 0,
   }),
@@ -54,10 +55,12 @@ export const useMedicoStore = defineStore('medico', {
       this.isLoading = true
       try {
         const response = await axios.get('/api/listino')
-        this.listino = response.data
+        this.listino = response.data.listino
+        this.tipologie = response.data.tipologie
         return { success: true }
       } catch (error) {
         this.listino = []
+        this.tipologie = []
         return { success: false, message: 'Errore nel caricamento del listino.' }
       } finally {
         this.isLoading = false
