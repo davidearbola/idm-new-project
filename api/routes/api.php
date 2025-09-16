@@ -84,6 +84,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- ROTTE PAZIENTE (Non affette dal middleware medico) ---
     Route::post('/preventivi', [PreventivoController::class, 'store']);
+    Route::get('/preventivi/{preventivoPaziente}/stato', [PreventivoController::class, 'stato']);
+    Route::post('/preventivi/{preventivoPaziente}/conferma', [PreventivoController::class, 'conferma']);
+    Route::get('/preventivi/{preventivoPaziente}/proposte-stato', [PreventivoController::class, 'proposteStato']);
     Route::prefix('proposte')->group(function () {
         Route::get('/', [PropostaController::class, 'index']);
         Route::post('/mark-as-read-paziente', [PropostaController::class, 'markProposteAsVisualizzate']);

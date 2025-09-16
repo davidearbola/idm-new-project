@@ -3,37 +3,33 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\GeneraControproposte;
 use App\Jobs\ProcessPreventivo;
+use App\Models\PreventivoPaziente;
+use App\Models\ContropropostaMedico; 
 use Illuminate\Http\Request;
-use Illuminate\Http\File; // <-- IMPORTANTE: Aggiungi questo "use" statement
+use Illuminate\Http\File;
+use Illuminate\Support\Facades\Auth; 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PreventivoController extends Controller
 {
-    /**
-     * Salva un nuovo preventivo.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+    // ... (il metodo store rimane invariato) ...
     public function store(Request $request)
     {
-        // Log iniziale per tracciare la ricezione del file
         if ($request->hasFile('preventivo')) {
             $sizeInKb = round($request->file('preventivo')->getSize() / 1024, 2);
             Log::info("Nuovo preventivo ricevuto. Dimensione file: {$sizeInKb} KB");
         }
 
-        // --- 1. VALIDAZIONE DEI DATI ---
         $anagraficaExists = $request->user()->anagraficaPaziente()->exists();
 
         $rules = [
-            'preventivo' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // max 10MB
+            'preventivo' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ];
 
-        // Se l'anagrafica del paziente non esiste, i suoi dati diventano obbligatori.
         if (!$anagraficaExists) {
             $rules += [
                 'cellulare' => 'required|string|min:9',
@@ -46,37 +42,27 @@ class PreventivoController extends Controller
 
         $validatedData = $request->validate($rules);
 
-        // --- 2. GESTIONE ANAGRAFICA PAZIENTE ---
-        // Questa logica viene eseguita prima del salvataggio del file,
-        // così abbiamo sempre un ID anagrafica a disposizione per creare il percorso.
         if (!$anagraficaExists) {
-            // Se non esiste, la creiamo.
             $anagrafica = $request->user()->anagraficaPaziente()->create([
                 'cellulare' => $validatedData['cellulare'],
                 'indirizzo' => $validatedData['indirizzo'],
                 'citta'     => $validatedData['citta'],
                 'cap'       => $validatedData['cap'],
                 'provincia' => $validatedData['provincia'],
-                'lat'       => 45.4642000, // Valori di default
+                'lat'       => 45.4642000,
                 'lng'       => 9.1900000,
             ]);
         } else {
-            // Se esiste già, la recuperiamo.
             $anagrafica = $request->user()->anagraficaPaziente;
         }
 
-        // --- 3. GESTIONE E SALVATAGGIO DEL FILE ---
         $file = $request->file('preventivo');
         $maxSizeInBytes = 1024 * 1024; // 1MB
-        $filePath = null; // Inizializziamo la variabile che conterrà il percorso finale del file
+        $filePath = null;
 
-        // Controlliamo se è un'immagine e se la sua dimensione supera il limite di 1MB
         if (Str::startsWith($file->getMimeType(), 'image/') && $file->getSize() > $maxSizeInBytes) {
-            // --- Caso A: L'immagine è grande e va ridimensionata ---
-
             $sourcePath = $file->getRealPath();
             list($originalWidth, $originalHeight, $imageType) = getimagesize($sourcePath);
-
             $sourceImage = null;
             switch ($imageType) {
                 case IMAGETYPE_JPEG:
@@ -86,71 +72,135 @@ class PreventivoController extends Controller
                     $sourceImage = imagecreatefrompng($sourcePath);
                     break;
             }
-
-            // Procediamo solo se il formato immagine è supportato (JPEG o PNG)
             if ($sourceImage) {
-                // Calcoliamo le nuove dimensioni mantenendo le proporzioni
-                $maxWidth = 1200; // Larghezza massima desiderata
+                $maxWidth = 1200;
                 $ratio = $originalWidth / $originalHeight;
                 $newWidth = $maxWidth;
                 $newHeight = $maxWidth / $ratio;
-
-                // Creiamo una nuova immagine vuota
                 $destImage = imagecreatetruecolor($newWidth, $newHeight);
                 imagecopyresampled($destImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $originalWidth, $originalHeight);
-
-                // Creiamo un percorso temporaneo per salvare l'immagine ridimensionata
                 $tempPath = tempnam(sys_get_temp_dir(), 'resized-') . '.' . $file->getClientOriginalExtension();
-
-                // Salviamo l'immagine nel percorso temporaneo con una data qualità/compressione
                 switch ($imageType) {
                     case IMAGETYPE_JPEG:
-                        imagejpeg($destImage, $tempPath, 85); // Qualità 85%
+                        imagejpeg($destImage, $tempPath, 85);
                         break;
                     case IMAGETYPE_PNG:
-                        imagepng($destImage, $tempPath, 6); // Compressione livello 6
+                        imagepng($destImage, $tempPath, 6);
                         break;
                 }
-
-                // Liberiamo la memoria usata dalle risorse immagine GD
                 imagedestroy($sourceImage);
                 imagedestroy($destImage);
-
-                // Prepariamo il nome e la cartella finale
                 $fileName = Str::slug($request->user()->name) . '_' . $anagrafica->id . '_' . time() . '.' . $file->getClientOriginalExtension();
                 $finalDirectory = 'preventivi/' . $anagrafica->id;
-
-                // **SALVATAGGIO CORRETTO**: Usiamo Storage::putFileAs per salvare il file temporaneo ridimensionato
                 Storage::disk('public')->putFileAs($finalDirectory, new File($tempPath), $fileName);
                 $filePath = $finalDirectory . '/' . $fileName;
-
-                // Rimuoviamo il file temporaneo perché ora è stato salvato permanentemente
                 unlink($tempPath);
             }
         }
 
-        // Se $filePath è ancora nullo, significa che non siamo entrati nel blocco di ridimensionamento.
-        // Questo accade se il file è un PDF o un'immagine già più piccola di 1MB.
         if (is_null($filePath)) {
-            // --- Caso B: Salvataggio standard del file originale ---
             $fileName = Str::slug($request->user()->name) . '_' . $anagrafica->id . '_' . time() . '.' . $file->getClientOriginalExtension();
             $filePath = $file->storeAs('preventivi/' . $anagrafica->id, $fileName, 'public');
         }
 
-        // --- 4. CREAZIONE RECORD NEL DATABASE ---
         $preventivo = $anagrafica->preventivi()->create([
-            'file_path'           => $filePath, // Usiamo il percorso finale, che sia del file ridimensionato o originale
+            'file_path'           => $filePath,
             'file_name_originale' => $file->getClientOriginalName(),
             'stato_elaborazione'  => 'caricato',
         ]);
 
-        // --- 5. DISPATCH DEL JOB IN BACKGROUND ---
         ProcessPreventivo::dispatch($preventivo);
 
-        // --- 6. RISPOSTA DI SUCCESSO ---
         return response()->json([
             'success' => true,
-            'message' => 'Preventivo caricato con successo! Lo stiamo elaborando per te.',
+            'message' => 'Preventivo caricato. Inizio elaborazione.',
+            'preventivo_id' => $preventivo->id
         ], 201);
+    }
+
+    public function stato(PreventivoPaziente $preventivoPaziente)
+    {
+        if ($preventivoPaziente->anagraficaPaziente->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Non autorizzato'], 403);
+        }
+
+        // *** MODIFICA CHIAVE: Estrae solo le voci per il frontend ***
+        $voci = null;
+        if ($preventivoPaziente->stato_elaborazione === 'completato') {
+            $datiPreventivo = json_decode($preventivoPaziente->json_preventivo);
+            // Controlla se la proprietà 'voci_preventivo' esiste prima di accedervi
+            $voci = $datiPreventivo->voci_preventivo ?? [];
+        }
+
+        return response()->json([
+            'stato_elaborazione' => $preventivoPaziente->stato_elaborazione,
+            'voci_preventivo' => $voci,
+        ]);
+    }
+
+    /**
+     * *** METODO CON LA LOGICA CORRETTA ***
+     * Riceve le voci modificate, ricalcola il totale e salva l'intero oggetto JSON.
+     */
+    public function conferma(Request $request, PreventivoPaziente $preventivoPaziente)
+    {
+        if ($preventivoPaziente->anagraficaPaziente->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Non autorizzato'], 403);
+        }
+        
+        if ($preventivoPaziente->stato_elaborazione !== 'completato') {
+            return response()->json(['error' => 'Il preventivo non è ancora stato elaborato.'], 422);
+        }
+
+        $validated = $request->validate([
+            'voci' => 'required|array',
+            'voci.*.prestazione' => 'required|string',
+            'voci.*.quantità' => 'required|integer|min:1',
+            'voci.*.prezzo' => 'required|numeric|min:0',
+        ]);
+
+        // 1. Recupera le nuove voci validate
+        $nuoveVoci = $validated['voci'];
+
+        // 2. Ricalcola il totale basandosi sulle nuove voci
+        $nuovoTotale = 0;
+        foreach ($nuoveVoci as $voce) {
+            $nuovoTotale += $voce['prezzo'];
+        }
+
+        // 3. Crea la nuova struttura JSON completa
+        $datiAggiornati = [
+            'voci_preventivo' => $nuoveVoci,
+            'totale_preventivo' => $nuovoTotale
+        ];
+
+        // 4. Salva il nuovo oggetto JSON completo nel database
+        // Laravel si occuperà di codificarlo correttamente nel campo 'json_preventivo'
+        $preventivoPaziente->json_preventivo = $datiAggiornati;
+        $preventivoPaziente->save();
+
+        // 5. Avvia il job per generare le controproposte
+        GeneraControproposte::dispatch($preventivoPaziente);
+
+        return response()->json(['message' => 'Preventivo confermato. Stiamo generando le controproposte.']);
+    }
+
+    /**
+     * *** NUOVO METODO ***
+     * Controlla se sono state generate delle proposte per un dato preventivo.
+     */
+    public function proposteStato(PreventivoPaziente $preventivoPaziente)
+    {
+        // Policy di sicurezza
+        if ($preventivoPaziente->anagraficaPaziente->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Non autorizzato'], 403);
+        }
+
+        // Controlla se esiste almeno una controproposta per questo preventivo
+        $proposteEsistono = ContropropostaMedico::where('preventivo_paziente_id', $preventivoPaziente->id)->exists();
+
+        return response()->json([
+            'proposte_pronte' => $proposteEsistono,
+        ]);
     }
 }

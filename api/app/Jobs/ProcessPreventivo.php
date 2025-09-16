@@ -19,22 +19,9 @@ class ProcessPreventivo implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $preventivo;
-    // --- NUOVA IMPOSTAZIONE: TENTATIVI AUTOMATICI ---
-    /**
-     * Il numero di volte che il job può essere tentato.
-     *
-     * @var int
-     */
     public $tries = 3;
-
-    /**
-     * Il numero di secondi di attesa prima di ritentare il job.
-     * Qui attendiamo 2 minuti (120s) prima del secondo tentativo, 
-     * e 5 minuti (300s) prima del terzo.
-     *
-     * @var array
-     */
     public $backoff = [120, 300];
+    public $timeout = 300;
 
     public function __construct(PreventivoPaziente $preventivo)
     {
@@ -43,7 +30,7 @@ class ProcessPreventivo implements ShouldQueue
 
     public function handle(): void
     {
-        // 1. Aggiorna lo stato a "in elaborazione"
+        Log::info("ProcessPreventivo Job #{$this->preventivo->id}: Avviato.");
         $this->preventivo->update(['stato_elaborazione' => 'in_elaborazione']);
 
         $text = null;
@@ -51,25 +38,21 @@ class ProcessPreventivo implements ShouldQueue
         $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
 
         try {
-
             if (strtolower($fileExtension) === 'pdf') {
-                // CASO A: Il file è un PDF
-
+                Log::info("ProcessPreventivo Job #{$this->preventivo->id}: Inizio parsing PDF.");
                 $parser = new Parser();
                 $pdf = $parser->parseFile($filePath);
                 $extractedText = $pdf->getText();
+                Log::info("ProcessPreventivo Job #{$this->preventivo->id}: Parsing PDF completato.");
 
-                // Controlliamo se il testo estratto è significativo (più di 50 caratteri)
                 if (strlen($extractedText) > 50) {
-                    // 1. PDF TESTUALE: abbiamo trovato abbastanza testo per procedere.
                     $text = $extractedText;
                 } else {
-                    // 2. PDF SCANSIONATO (o vuoto): non c'è testo, non possiamo processarlo.
-                    Log::warning("PDF #{$this->preventivo->id} è probabilmente un file scansionato o vuoto. Impossibile procedere.");
-                    throw new \Exception('Il file PDF è un\'immagine scansionata e non può essere processato automaticamente.');
+                    Log::warning("PDF #{$this->preventivo->id} è probabilmente un file scansionato o vuoto.");
+                    throw new \Exception('Il file PDF è un\'immagine scansionata e non può essere processato.');
                 }
             } else {
-                // CASO B: Il file è un'immagine (JPG, PNG, etc.)
+                Log::info("ProcessPreventivo Job #{$this->preventivo->id}: Inizio chiamata a OCR.space.");
                 $response = Http::timeout(120)
                     ->withHeaders(['apikey' => env('OCR_SPACE_API_KEY')])
                     ->attach('file', file_get_contents($filePath), basename($filePath))
@@ -77,8 +60,9 @@ class ProcessPreventivo implements ShouldQueue
                         'language' => 'ita',
                         'isOverlayRequired' => 'false',
                         'detectOrientation' => 'true',
-                    'ocrengine' => 2,
+                        'ocrengine' => 2,
                     ]);
+                Log::info("ProcessPreventivo Job #{$this->preventivo->id}: Chiamata a OCR.space completata.");
 
                 if ($response->successful() && !$response->json('IsErroredOnProcessing')) {
                     $text = $response->json('ParsedResults.0.ParsedText');
@@ -90,12 +74,13 @@ class ProcessPreventivo implements ShouldQueue
             if (!$text) {
                 throw new \Exception('Estrazione del testo fallita, il risultato è vuoto.');
             }
-
-            // 3. Chiamata OpenAI 
+            
             $additionalInstruction = '';
             if (strtolower($fileExtension) === 'pdf') {
                 $additionalInstruction = "\n\nNOTA: Questo testo proviene da un PDF e la struttura a colonne potrebbe essere andata persa. Fai del tuo meglio per associare correttamente le prestazioni con le rispettive quantità e prezzi.";
             }
+
+            Log::info("ProcessPreventivo Job #{$this->preventivo->id}: Inizio chiamata a OpenAI.");
             $client = OpenAI::client(env('OPENAI_API_KEY'));
             $response = $client->chat()->create([
                 'model' => 'gpt-4o',
@@ -110,7 +95,7 @@ class ProcessPreventivo implements ShouldQueue
                         2.  **Analizza ogni riga della tabella una per una**, estraendo le tre informazioni chiave richieste.
                         3.  **Infine, cerca nel fondo del documento il totale generale definitivo.**
                                             
-                        ## FORMATO JSON DI OUTPUT OBBLIGATORIO
+                        ## FORMATO JSON DI OUTPUT OBBLigatorio
                         Il JSON deve contenere due chiavi principali:
                         1.  `voci_preventivo`: un array di oggetti.
                         2.  `totale_preventivo`: un numero (float o integer).
@@ -169,21 +154,23 @@ class ProcessPreventivo implements ShouldQueue
                 'response_format' => ['type' => 'json_object'],
             ]);
 
+            Log::info("ProcessPreventivo Job #{$this->preventivo->id}: Chiamata a OpenAI completata.");
+
             $structuredJsonString = $response->choices[0]->message->content;
-            $structuredJson = json_decode($structuredJsonString, true);
+            $decodedResponse = json_decode($structuredJsonString, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new \Exception('Il JSON ricevuto da OpenAI non è valido. Risposta: ' . $structuredJsonString);
             }
 
-            // 4. Salva il JSON e aggiorna lo stato nel database
+            // *** MODIFICA CHIAVE: SALVIAMO L'INTERO OGGETTO JSON ***
             $this->preventivo->update([
-                'json_preventivo'    => $structuredJson,
+                'json_preventivo'    => json_encode($decodedResponse), // Salva l'intero oggetto
                 'stato_elaborazione' => 'completato'
             ]);
+            
+            Log::info("ProcessPreventivo Job #{$this->preventivo->id}: Completato con successo.");
 
-            // 5. Lancia il prossimo job 
-            // GeneraControproposte::dispatch($this->preventivo);
         } catch (\Exception $e) {
             $this->preventivo->update(['stato_elaborazione' => 'errore', 'messaggio_errore' => $e->getMessage()]);
             Log::error("Errore durante l'elaborazione del preventivo #{$this->preventivo->id}: " . $e->getMessage());
