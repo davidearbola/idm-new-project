@@ -19,6 +19,22 @@ class ProcessPreventivo implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $preventivo;
+    // --- NUOVA IMPOSTAZIONE: TENTATIVI AUTOMATICI ---
+    /**
+     * Il numero di volte che il job può essere tentato.
+     *
+     * @var int
+     */
+    public $tries = 3;
+
+    /**
+     * Il numero di secondi di attesa prima di ritentare il job.
+     * Qui attendiamo 2 minuti (120s) prima del secondo tentativo, 
+     * e 5 minuti (300s) prima del terzo.
+     *
+     * @var array
+     */
+    public $backoff = [120, 300];
 
     public function __construct(PreventivoPaziente $preventivo)
     {
@@ -31,29 +47,43 @@ class ProcessPreventivo implements ShouldQueue
         $this->preventivo->update(['stato_elaborazione' => 'in_elaborazione']);
 
         $text = null;
-        $fileExtension = pathinfo($this->preventivo->file_path, PATHINFO_EXTENSION);
+        $filePath = Storage::disk('public')->path($this->preventivo->file_path);
+        $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
 
         try {
-            $filePath = Storage::disk('public')->path($this->preventivo->file_path);
 
-            // 2. Estrai il testo dal file (PDF o Immagine)
             if (strtolower($fileExtension) === 'pdf') {
+                // CASO A: Il file è un PDF
+
                 $parser = new Parser();
                 $pdf = $parser->parseFile($filePath);
-                $text = $pdf->getText();
+                $extractedText = $pdf->getText();
+
+                // Controlliamo se il testo estratto è significativo (più di 50 caratteri)
+                if (strlen($extractedText) > 50) {
+                    // 1. PDF TESTUALE: abbiamo trovato abbastanza testo per procedere.
+                    $text = $extractedText;
+                } else {
+                    // 2. PDF SCANSIONATO (o vuoto): non c'è testo, non possiamo processarlo.
+                    Log::warning("PDF #{$this->preventivo->id} è probabilmente un file scansionato o vuoto. Impossibile procedere.");
+                    throw new \Exception('Il file PDF è un\'immagine scansionata e non può essere processato automaticamente.');
+                }
             } else {
-                $response = Http::withHeaders(['apikey' => env('OCR_SPACE_API_KEY')])
+                // CASO B: Il file è un'immagine (JPG, PNG, etc.)
+                $response = Http::timeout(120)
+                    ->withHeaders(['apikey' => env('OCR_SPACE_API_KEY')])
                     ->attach('file', file_get_contents($filePath), basename($filePath))
                     ->post('https://api.ocr.space/parse/image', [
                         'language' => 'ita',
                         'isOverlayRequired' => 'false',
                         'detectOrientation' => 'true',
+                    'ocrengine' => 2,
                     ]);
 
                 if ($response->successful() && !$response->json('IsErroredOnProcessing')) {
                     $text = $response->json('ParsedResults.0.ParsedText');
                 } else {
-                    throw new \Exception('Errore API OCR.space: ' . ($response->json('ErrorMessage.0') ?? 'Errore sconosciuto'));
+                    throw new \Exception('Errore API OCR.space: ' . ($response->json('ErrorMessage.0') ?? $response->body()));
                 }
             }
 
@@ -62,17 +92,78 @@ class ProcessPreventivo implements ShouldQueue
             }
 
             // 3. Chiamata OpenAI 
+            $additionalInstruction = '';
+            if (strtolower($fileExtension) === 'pdf') {
+                $additionalInstruction = "\n\nNOTA: Questo testo proviene da un PDF e la struttura a colonne potrebbe essere andata persa. Fai del tuo meglio per associare correttamente le prestazioni con le rispettive quantità e prezzi.";
+            }
             $client = OpenAI::client(env('OPENAI_API_KEY'));
             $response = $client->chat()->create([
-                'model' => 'gpt-4-turbo', // Consigliato per affidabilità con JSON e calcoli
+                'model' => 'gpt-4o',
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => 'Sei un assistente che analizza il testo di un preventivo medico/dentistico e lo struttura in un file JSON. Il JSON deve avere due chiavi principali: "voci_preventivo", che è un array di oggetti, e "totale_preventivo", che è un numero. Ogni oggetto in "voci_preventivo" deve avere tre chiavi: "prestazione" (stringa), "quantità" (numero) e "prezzo" (numero). Il valore di "prezzo" nelle "voci_preventivo" se è indicata la quantità deve fare una moltiplicazione del "prezzo" in base alla quantità indicata, altrimenti di default metti 1. Il valore di "totale_preventivo" deve essere la somma matematica di tutti i valori "prezzo" presenti nell\'array. Ignora i dati del paziente e le informazioni non pertinenti alle singole prestazioni. Assicurati che il JSON sia valido.'
+                        'content' => 'Sei un assistente IA esperto nell\'analisi di documenti finanziari, specializzato in preventivi medici e dentistici. Il tuo compito è estrarre le informazioni con la massima precisione e strutturarle in un formato JSON specifico.
+
+                        ## STRATEGIA DI ANALISI
+                        Prima di creare il JSON, segui mentalmente questi passi:
+                        1.  **Scansiona il documento per identificare la struttura tabellare.** Cerca le intestazioni di colonna come "Prestazione", "Quantità", "Prezzo Singolo", "Prezzo Totale".
+                        2.  **Analizza ogni riga della tabella una per una**, estraendo le tre informazioni chiave richieste.
+                        3.  **Infine, cerca nel fondo del documento il totale generale definitivo.**
+                                            
+                        ## FORMATO JSON DI OUTPUT OBBLIGATORIO
+                        Il JSON deve contenere due chiavi principali:
+                        1.  `voci_preventivo`: un array di oggetti.
+                        2.  `totale_preventivo`: un numero (float o integer).
+                                            
+                        Ogni oggetto all\'interno di `voci_preventivo` deve avere esattamente tre chiavi:
+                        -   `prestazione`: (stringa) Il nome del servizio. Rimuovi codici o numeri tra parentesi (es. "(27,28)").
+                        -   `quantità`: (numero, integer) La quantità del servizio.
+                        -   `prezzo`: (numero, float o integer) Il costo **TOTALE** per quella voce di preventivo.
+                                            
+                        ## REGOLE FONDAMENTALI PER L\'ESTRAZIONE
+                                            
+                        ### 1. Analisi delle Voci (`voci_preventivo`):
+                        -   **Prestazione**: Deve essere solo il testo descrittivo del trattamento.
+                        -   **Quantità**:
+                            - Cerca attivamente una colonna con intestazioni come: **`Quantità`**, **`Q.tà`**, **`Qtà`**, **`Qt.`**. Usa il valore da quella colonna.
+                            - Se non esiste una colonna, cerca la quantità nella descrizione (es. "x2").
+                            - Se non trovi nessuna indicazione, la quantità di default è `1`.
+                        -   **Prezzo (per singola voce)**:
+                            - **REGOLA CRITICA**: Questo campo deve essere il **costo totale della riga**.
+                            - Se vedi colonne sia per "Prezzo Singolo" (o "Unitario") sia per "Prezzo Totale" (o "Importo"), **devi obbligatoriamente usare il valore dalla colonna "Prezzo Totale"**.
+                            - Se c\'è solo una quantità e un prezzo unitario, calcola tu il totale (`quantità` * `prezzo_unitario`).
+                            - Se c\'è un solo prezzo, assumi che sia già il totale.
+                                            
+                        ### 2. Calcolo del Totale (`totale_preventivo`):
+                        -   **PRIORITÀ ASSOLUTA**: Il totale deve essere quello **esplicitamente scritto sul documento**.
+                        -   Cerca con la massima priorità etichette come: **`Totale da pagare`**, **`Totale`**, **`Corrispettivo`**, **`Totale IVA Inclusa`**.
+                        -   Il valore da prendere è la cifra finale, quella che include ogni costo aggiuntivo (es. "quota associativa"). Se vedi "Corrispettivo: 1000" e "Totale con quota: 1050", il valore corretto è `1050`.
+                        -   **Fallback (DA USARE CON CAUTELA)**: Calcola tu la somma dei prezzi delle voci **SOLO E SOLTANTO SE** non esiste un totale generale esplicito nel documento.
+                                            
+                        ### 3. Regole Aggiuntive e Formattazione:
+                        -   **Numeri**: Tutti i valori devono essere numeri puri, senza simboli di valuta (€) o separatori delle migliaia (usa `1334.00` e non `1.334,00`). Usa il punto `.` come separatore decimale.
+                        -   **Dati da Ignorare**: Ignora intestazioni, dati del paziente, indirizzi, e qualsiasi testo non pertinente.
+                                            
+                        ## ESEMPIO PRATICO (Basato su un caso reale)
+                        Testo: "Prestazione: Ricostruzione dente (27,28), Qtà: 2, Prezzo singolo: 116,00, Prezzo totale: 232,00. [...] In fondo: Corrispettivo con quota associativa 89€: 1.334,00 €"
+                                            
+                        Output JSON corretto per questo caso:
+                        ```json
+                        {
+                          "voci_preventivo": [
+                            {
+                              "prestazione": "Ricostruzione dente",
+                              "quantità": 2,
+                              "prezzo": 232.00
+                            }
+                          ],
+                          "totale_preventivo": 1334.00
+                        }
+                        ```'
                     ],
                     [
                         'role' => 'user',
-                        'content' => "Analizza, struttura e calcola il totale del seguente testo: \n\n" . $text
+                        'content' => "Analizza, struttura e calcola il totale del seguente testo estratto da un documento: \n\n" . $text . $additionalInstruction
                     ]
                 ],
                 'response_format' => ['type' => 'json_object'],
@@ -92,10 +183,9 @@ class ProcessPreventivo implements ShouldQueue
             ]);
 
             // 5. Lancia il prossimo job 
-            GeneraControproposte::dispatch($this->preventivo);
-
+            // GeneraControproposte::dispatch($this->preventivo);
         } catch (\Exception $e) {
-            $this->preventivo->update(['stato_elaborazione' => 'errore']);
+            $this->preventivo->update(['stato_elaborazione' => 'errore', 'messaggio_errore' => $e->getMessage()]);
             Log::error("Errore durante l'elaborazione del preventivo #{$this->preventivo->id}: " . $e->getMessage());
             $this->fail($e);
         }
