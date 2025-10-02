@@ -146,7 +146,7 @@ class ProfiloMedicoController extends Controller
             'nome' => $validated['nome'],
             'ruolo' => $validated['ruolo'],
             'specializzazione' => $validated['specializzazione'],
-            'esperienza' => $validated['esperienza'],
+            'esperienza' => $validated['esperienza'] ?? null,
             'foto_path' => $filePath,
         ]);
 

@@ -29,9 +29,8 @@ class GeneraControproposte implements ShouldQueue
     public function handle(): void
     {
         try {
-            $pazienteAnagrafica = $this->preventivo->anagraficaPaziente;
-            $pazienteLat = $pazienteAnagrafica->lat;
-            $pazienteLng = $pazienteAnagrafica->lng;
+            $pazienteLat = $this->preventivo->lat_paziente;
+            $pazienteLng = $this->preventivo->lng_paziente;
             $raggioKm = 10; // Raggio di ricerca in KM
 
             // 1. QUERY GEOSPAZIALE PER TROVARE I 3 MEDICI IDONEI PIÙ VICINI
@@ -42,7 +41,7 @@ class GeneraControproposte implements ShouldQueue
             ->whereNotNull('anagrafica_medici.step_staff_completed_at')
             ->select('users.*')
             ->selectRaw(
-                '( 6371 * acos( cos( radians(?) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(?) ) + sin( radians(?) ) * sin( radians( lat ) ) ) ) AS distance', 
+                '( 6371 * acos( cos( radians(?) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(?) ) + sin( radians(?) ) * sin( radians( lat ) ) ) ) AS distance',
                 [$pazienteLat, $pazienteLng, $pazienteLat]
             )
             ->having('distance', '<', $raggioKm)
@@ -52,6 +51,7 @@ class GeneraControproposte implements ShouldQueue
 
             if ($mediciVicini->isEmpty()) {
                 Log::info("Nessun medico idoneo trovato per il preventivo #{$this->preventivo->id}");
+                $this->preventivo->update(['stato_elaborazione' => 'senza_proposte']);
                 return;
             }
 
@@ -62,7 +62,7 @@ class GeneraControproposte implements ShouldQueue
 
                 // Prepara il prompt per OpenAI
                 $prompt = $this->creaPromptOpenAI($this->preventivo->json_preventivo, $listinoMedico);
-                
+
                 // Chiama OpenAI
                 $client = OpenAI::client(env('OPENAI_API_KEY'));
                 $response = $client->chat()->create([
@@ -78,21 +78,18 @@ class GeneraControproposte implements ShouldQueue
                     'json_proposta' => $jsonProposta,
                 ]);
 
-                // Crea la notifica in-app e invia l'email
-                $paziente = $pazienteAnagrafica->user;
-                $paziente->notifiche()->create([
-                    'tipo' => 'NUOVA_PROPOSTA',
-                    'messaggio' => 'Hai ricevuto una nuova proposta dallo studio "' . $medico->anagraficaMedico->ragione_sociale . '".',
-                    'url_azione' => '/dashboard/proposte' // URL relativo per il frontend
-                ]);
-                $paziente->notify(new NuovaPropostaNotification($proposta));
-
                 // Invia email al medico
                 $medico->notify(new PropostaGenerataMedicoNotification($proposta));
             }
 
+            // Aggiorna lo stato del preventivo a proposte_pronte
+            $this->preventivo->update(['stato_elaborazione' => 'proposte_pronte']);
+
+            Log::info("GeneraControproposte Job completato per il preventivo #{$this->preventivo->id}. Trovate {$mediciVicini->count()} proposte.");
+
         } catch (\Exception $e) {
             Log::error("Errore nel job GeneraControproposte per il preventivo #{$this->preventivo->id}: " . $e->getMessage());
+            $this->preventivo->update(['stato_elaborazione' => 'errore', 'messaggio_errore' => $e->getMessage()]);
             $this->fail($e);
         }
     }

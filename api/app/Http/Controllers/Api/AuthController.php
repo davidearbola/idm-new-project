@@ -40,73 +40,73 @@ class AuthController extends Controller
     // }
 
     // FUNZIONE SOSPESA
-    // public function registerMedico(Request $request)
-    // {
-    //     $request->validate([
-    //         'name' => ['required', 'string', 'max:255'],
-    //         'email' => ['required', 'string', 'email', 'max:255', 'unique:' . User::class],
-    //         'password' => ['required', 'confirmed', Rules\Password::defaults()],
-    //         'ragione_sociale' => ['required', 'string', 'max:255'],
-    //         'p_iva' => ['required', 'string', 'max:20', 'unique:' . AnagraficaMedico::class],
-    //         'cellulare' => ['required', 'string', 'max:20'],
-    //         'indirizzo' => ['required', 'string', 'max:255'],
-    //         'citta' => ['required', 'string', 'max:255'],
-    //         'cap' => ['required', 'string', 'max:10'],
-    //         'provincia' => ['required', 'string', 'max:255'],
-    //     ]);
+    public function registerMedico(Request $request)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:' . User::class],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'ragione_sociale' => ['required', 'string', 'max:255'],
+            'p_iva' => ['required', 'string', 'max:20', 'unique:' . AnagraficaMedico::class],
+            'cellulare' => ['required', 'string', 'max:20'],
+            'indirizzo' => ['required', 'string', 'max:255'],
+            'citta' => ['required', 'string', 'max:255'],
+            'cap' => ['required', 'string', 'max:10'],
+            'provincia' => ['required', 'string', 'max:255'],
+        ]);
 
-    //     $user = User::create([
-    //         'role' => 'medico',
-    //         'name' => $request->name,
-    //         'email' => $request->email,
-    //         'password' => Hash::make($request->password),
-    //     ]);
+        $user = User::create([
+            'role' => 'medico',
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
 
-    //     // --- BLOCCO AGGIUNTO ---
-    //     // Geocodifica l'indirizzo del medico
-    //     // TODO: Riattivare la chiamata all'API di Google quando sarà disponibile!
-    //     /*
-    //     $fullAddress = "{$request->indirizzo}, {$request->cap} {$request->citta}, {$request->provincia}";
-    //     $apiKey = env('Maps_API_KEY');
-    //     $lat = null;
-    //     $lng = null;
+        // --- BLOCCO AGGIUNTO ---
+        // Geocodifica l'indirizzo del medico
+        // TODO: Riattivare la chiamata all'API di Google quando sarà disponibile!
+        /*
+        $fullAddress = "{$request->indirizzo}, {$request->cap} {$request->citta}, {$request->provincia}";
+        $apiKey = env('Maps_API_KEY');
+        $lat = null;
+        $lng = null;
     
-    //     $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
-    //         'address' => $fullAddress,
-    //         'key' => $apiKey,
-    //     ]);
+        $response = Http::get("https://maps.googleapis.com/maps/api/geocode/json", [
+            'address' => $fullAddress,
+            'key' => $apiKey,
+        ]);
     
-    //     if ($response->successful() && $response->json('status') === 'OK') {
-    //         $location = $response->json('results.0.geometry.location');
-    //         $lat = $location['lat'];
-    //         $lng = $location['lng'];
-    //     }
-    //     */
+        if ($response->successful() && $response->json('status') === 'OK') {
+            $location = $response->json('results.0.geometry.location');
+            $lat = $location['lat'];
+            $lng = $location['lng'];
+        }
+        */
 
-    //     // WORKAROUND TEMPORANEO: Usiamo coordinate fisse (es. centro di Roma)
-    //     $lat = 45.4642;
-    //     $lng = 9.1900;
-    //     // --- FINE BLOCCO AGGIUNTO ---
+        // WORKAROUND TEMPORANEO: Usiamo coordinate fisse (es. centro di Roma)
+        $lat = 45.4642;
+        $lng = 9.1900;
+        // --- FINE BLOCCO AGGIUNTO ---
 
-    //     $user->anagraficaMedico()->create([
-    //         'ragione_sociale' => $request->ragione_sociale,
-    //         'p_iva' => $request->p_iva,
-    //         'cellulare' => $request->cellulare,
-    //         'indirizzo' => $request->indirizzo,
-    //         'citta' => $request->citta,
-    //         'cap' => $request->cap,
-    //         'provincia' => $request->provincia,
-    //         'lat' => $lat,
-    //         'lng' => $lng,
-    //     ]);
+        $user->anagraficaMedico()->create([
+            'ragione_sociale' => $request->ragione_sociale,
+            'p_iva' => $request->p_iva,
+            'cellulare' => $request->cellulare,
+            'indirizzo' => $request->indirizzo,
+            'citta' => $request->citta,
+            'cap' => $request->cap,
+            'provincia' => $request->provincia,
+            'lat' => $lat,
+            'lng' => $lng,
+        ]);
 
-    //     $user->sendEmailVerificationNotification();
+        $user->sendEmailVerificationNotification();
 
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Registrazione effettuata con successo. Per favore controlla la tua email per verificare il tuo account!'
-    //     ], 201);
-    // }
+        return response()->json([
+            'success' => true,
+            'message' => 'Registrazione effettuata con successo. Per favore controlla la tua email per verificare il tuo account!'
+        ], 201);
+    }
 
     public function login(Request $request)
     {

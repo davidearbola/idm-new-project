@@ -29,6 +29,13 @@ Route::post('/register-medico', [AuthController::class, 'registerMedico']);
 Route::get('/province', [GeoController::class, 'getProvince']);
 Route::get('/comuni/{param}', [GeoController::class, 'getComuni']);
 
+// --- ROTTE PREVENTIVI PUBBLICHE (NON AUTENTICATE) ---
+Route::post('/preventivi', [PreventivoController::class, 'store']);
+Route::get('/preventivi/{preventivoPaziente}/stato', [PreventivoController::class, 'stato']);
+Route::post('/preventivi/{preventivoPaziente}/conferma', [PreventivoController::class, 'conferma']);
+Route::post('/preventivi/{preventivoPaziente}/salva-dati-paziente', [PreventivoController::class, 'salvaDatiPaziente']);
+Route::get('/preventivi/{preventivoPaziente}/proposte-stato', [PreventivoController::class, 'proposteStato']);
+
 /*
 |--------------------------------------------------------------------------
 | Rotte Protette da Autenticazione (`auth:sanctum`)
@@ -83,10 +90,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // --- ROTTE PAZIENTE (Non affette dal middleware medico) ---
-    Route::post('/preventivi', [PreventivoController::class, 'store']);
-    Route::get('/preventivi/{preventivoPaziente}/stato', [PreventivoController::class, 'stato']);
-    Route::post('/preventivi/{preventivoPaziente}/conferma', [PreventivoController::class, 'conferma']);
-    Route::get('/preventivi/{preventivoPaziente}/proposte-stato', [PreventivoController::class, 'proposteStato']);
     Route::prefix('proposte')->group(function () {
         Route::get('/', [PropostaController::class, 'index']);
         Route::post('/mark-as-read-paziente', [PropostaController::class, 'markProposteAsVisualizzate']);

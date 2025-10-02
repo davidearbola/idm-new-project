@@ -23,37 +23,9 @@ class PreventivoController extends Controller
             Log::info("Nuovo preventivo ricevuto. Dimensione file: {$sizeInKb} KB");
         }
 
-        $anagraficaExists = $request->user()->anagraficaPaziente()->exists();
-
-        $rules = [
+        $validatedData = $request->validate([
             'preventivo' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-        ];
-
-        if (!$anagraficaExists) {
-            $rules += [
-                'cellulare' => 'required|string|min:9',
-                'indirizzo' => 'required|string|max:255',
-                'citta'     => 'required|string|max:255',
-                'cap'       => 'required|string|size:5',
-                'provincia' => 'required|string|size:2',
-            ];
-        }
-
-        $validatedData = $request->validate($rules);
-
-        if (!$anagraficaExists) {
-            $anagrafica = $request->user()->anagraficaPaziente()->create([
-                'cellulare' => $validatedData['cellulare'],
-                'indirizzo' => $validatedData['indirizzo'],
-                'citta'     => $validatedData['citta'],
-                'cap'       => $validatedData['cap'],
-                'provincia' => $validatedData['provincia'],
-                'lat'       => 45.4642000,
-                'lng'       => 9.1900000,
-            ]);
-        } else {
-            $anagrafica = $request->user()->anagraficaPaziente;
-        }
+        ]);
 
         $file = $request->file('preventivo');
         $maxSizeInBytes = 1024 * 1024; // 1MB
@@ -89,8 +61,8 @@ class PreventivoController extends Controller
                 }
                 imagedestroy($sourceImage);
                 imagedestroy($destImage);
-                $fileName = Str::slug($request->user()->name) . '_' . $anagrafica->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-                $finalDirectory = 'preventivi/' . $anagrafica->id;
+                $fileName = 'preventivo_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+                $finalDirectory = 'preventivi';
                 Storage::disk('public')->putFileAs($finalDirectory, new File($tempPath), $fileName);
                 $filePath = $finalDirectory . '/' . $fileName;
                 unlink($tempPath);
@@ -98,11 +70,11 @@ class PreventivoController extends Controller
         }
 
         if (is_null($filePath)) {
-            $fileName = Str::slug($request->user()->name) . '_' . $anagrafica->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $filePath = $file->storeAs('preventivi/' . $anagrafica->id, $fileName, 'public');
+            $fileName = 'preventivo_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('preventivi', $fileName, 'public');
         }
 
-        $preventivo = $anagrafica->preventivi()->create([
+        $preventivo = PreventivoPaziente::create([
             'file_path'           => $filePath,
             'file_name_originale' => $file->getClientOriginalName(),
             'stato_elaborazione'  => 'caricato',
@@ -119,34 +91,23 @@ class PreventivoController extends Controller
 
     public function stato(PreventivoPaziente $preventivoPaziente)
     {
-        if ($preventivoPaziente->anagraficaPaziente->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Non autorizzato'], 403);
-        }
-
-        // *** MODIFICA CHIAVE: Estrae solo le voci per il frontend ***
         $voci = null;
         if ($preventivoPaziente->stato_elaborazione === 'completato') {
-            $datiPreventivo = json_decode($preventivoPaziente->json_preventivo);
-            // Controlla se la proprietà 'voci_preventivo' esiste prima di accedervi
-            $voci = $datiPreventivo->voci_preventivo ?? [];
+            $voci = $preventivoPaziente->json_preventivo['voci_preventivo'] ?? [];
         }
 
         return response()->json([
             'stato_elaborazione' => $preventivoPaziente->stato_elaborazione,
             'voci_preventivo' => $voci,
+            'messaggio_errore' => $preventivoPaziente->messaggio_errore,
         ]);
     }
 
     /**
-     * *** METODO CON LA LOGICA CORRETTA ***
      * Riceve le voci modificate, ricalcola il totale e salva l'intero oggetto JSON.
      */
     public function conferma(Request $request, PreventivoPaziente $preventivoPaziente)
     {
-        if ($preventivoPaziente->anagraficaPaziente->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Non autorizzato'], 403);
-        }
-        
         if ($preventivoPaziente->stato_elaborazione !== 'completato') {
             return response()->json(['error' => 'Il preventivo non è ancora stato elaborato.'], 422);
         }
@@ -173,32 +134,74 @@ class PreventivoController extends Controller
             'totale_preventivo' => $nuovoTotale
         ];
 
-        // 4. Salva il nuovo oggetto JSON completo nel database
-        // Laravel si occuperà di codificarlo correttamente nel campo 'json_preventivo'
+        // 4. Salva il nuovo oggetto JSON completo e cambia lo stato
         $preventivoPaziente->json_preventivo = $datiAggiornati;
+        $preventivoPaziente->stato_elaborazione = 'attesa_dati_paziente';
         $preventivoPaziente->save();
 
-        // 5. Avvia il job per generare le controproposte
-        GeneraControproposte::dispatch($preventivoPaziente);
-
-        return response()->json(['message' => 'Preventivo confermato. Stiamo generando le controproposte.']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Voci del preventivo confermate. Inserisci i tuoi dati personali per proseguire.'
+        ]);
     }
 
     /**
-     * *** NUOVO METODO ***
+     * Salva i dati del paziente e avvia la ricerca delle controproposte
+     */
+    public function salvaDatiPaziente(Request $request, PreventivoPaziente $preventivoPaziente)
+    {
+        if ($preventivoPaziente->stato_elaborazione !== 'attesa_dati_paziente') {
+            return response()->json(['error' => 'Il preventivo non è nello stato corretto.'], 422);
+        }
+
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+            'cellulare' => 'required|string|min:9',
+            'nome' => 'required|string|max:255',
+            'cognome' => 'required|string|max:255',
+            'indirizzo' => 'required|string|max:255',
+            'citta' => 'required|string|max:255',
+            'provincia' => 'required|string|size:2',
+            'cap' => 'required|string|size:5',
+        ]);
+
+        // Geocoding dell'indirizzo (per ora usa coordinate di default, poi implementeremo servizio di geocoding)
+        $lat = 45.4642000;
+        $lng = 9.1900000;
+
+        // Salva i dati del paziente
+        $preventivoPaziente->update([
+            'email_paziente' => $validated['email'],
+            'cellulare_paziente' => $validated['cellulare'],
+            'nome_paziente' => $validated['nome'],
+            'cognome_paziente' => $validated['cognome'],
+            'indirizzo_paziente' => $validated['indirizzo'],
+            'citta_paziente' => $validated['citta'],
+            'provincia_paziente' => $validated['provincia'],
+            'cap_paziente' => $validated['cap'],
+            'lat_paziente' => $lat,
+            'lng_paziente' => $lng,
+            'stato_elaborazione' => 'ricerca_proposte',
+        ]);
+
+        // Avvia il job per generare le controproposte
+        GeneraControproposte::dispatch($preventivoPaziente);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dati salvati. Stiamo cercando le migliori proposte per te.'
+        ]);
+    }
+
+    /**
      * Controlla se sono state generate delle proposte per un dato preventivo.
      */
     public function proposteStato(PreventivoPaziente $preventivoPaziente)
     {
-        // Policy di sicurezza
-        if ($preventivoPaziente->anagraficaPaziente->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Non autorizzato'], 403);
-        }
-
-        // Controlla se esiste almeno una controproposta per questo preventivo
         $proposteEsistono = ContropropostaMedico::where('preventivo_paziente_id', $preventivoPaziente->id)->exists();
 
         return response()->json([
+            'stato_elaborazione' => $preventivoPaziente->stato_elaborazione,
             'proposte_pronte' => $proposteEsistono,
         ]);
     }

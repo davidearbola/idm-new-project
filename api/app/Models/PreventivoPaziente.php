@@ -23,11 +23,21 @@ class PreventivoPaziente extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'anagrafica_paziente_id',
         'file_path',
         'file_name_originale',
         'stato_elaborazione',
         'json_preventivo',
+        'messaggio_errore',
+        'email_paziente',
+        'cellulare_paziente',
+        'nome_paziente',
+        'cognome_paziente',
+        'indirizzo_paziente',
+        'citta_paziente',
+        'provincia_paziente',
+        'cap_paziente',
+        'lat_paziente',
+        'lng_paziente',
     ];
 
     /**
@@ -37,15 +47,9 @@ class PreventivoPaziente extends Model
      */
     protected $casts = [
         'json_preventivo' => 'array',
+        'lat_paziente' => 'decimal:7',
+        'lng_paziente' => 'decimal:7',
     ];
-
-    /**
-     * Get the anagrafica that owns the preventivo.
-     */
-    public function anagraficaPaziente(): BelongsTo
-    {
-        return $this->belongsTo(AnagraficaPaziente::class);
-    }
 
     public function controproposte()
     {

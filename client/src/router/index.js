@@ -24,6 +24,12 @@ const router = createRouter({
       component: () => import('../views/ComeFunzionaView.vue'),
       meta: { layout: 'PublicLayout', showHeader: true, showFooter: true },
     },
+    {
+      path: '/carica-preventivo',
+      name: 'carica-preventivo',
+      component: () => import('../views/CaricaPreventivoView.vue'),
+      meta: { layout: 'PublicLayout', showHeader: false, showFooter: false },
+    },
     // **** ROTTE AUTH ****
     {
       path: '/login',
@@ -152,7 +158,7 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   // Rotte da bloccare per i pazienti
-  const patientAuthRoutes = ['register']
+  // const patientAuthRoutes = ['register']
 
   // ************ SCOMMENTARE PER BLOCCARE REGISTRAZIONI PAZIENTI ******************
   // 1. PRIMO CONTROLLO: Intercettiamo le rotte dei pazienti

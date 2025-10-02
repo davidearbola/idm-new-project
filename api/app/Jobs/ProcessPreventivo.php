@@ -155,8 +155,9 @@ class ProcessPreventivo implements ShouldQueue
             ]);
 
             Log::info("ProcessPreventivo Job #{$this->preventivo->id}: Chiamata a OpenAI completata.");
-
+            
             $structuredJsonString = $response->choices[0]->message->content;
+            Log::info($structuredJsonString);
             $decodedResponse = json_decode($structuredJsonString, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
@@ -165,7 +166,7 @@ class ProcessPreventivo implements ShouldQueue
 
             // *** MODIFICA CHIAVE: SALVIAMO L'INTERO OGGETTO JSON ***
             $this->preventivo->update([
-                'json_preventivo'    => json_encode($decodedResponse), // Salva l'intero oggetto
+                'json_preventivo'    => $decodedResponse, // Laravel farà automaticamente il json_encode grazie al cast
                 'stato_elaborazione' => 'completato'
             ]);
             
