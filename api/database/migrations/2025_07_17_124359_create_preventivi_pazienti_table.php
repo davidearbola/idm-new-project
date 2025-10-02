@@ -13,10 +13,19 @@ return new class extends Migration
     {
         Schema::create('preventivi_pazienti', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('anagrafica_paziente_id')->constrained('anagrafica_pazienti')->onDelete('cascade');
+            $table->string('email_paziente')->nullable();
+            $table->string('cellulare_paziente')->nullable();
+            $table->string('nome_paziente')->nullable();
+            $table->string('cognome_paziente')->nullable();
+            $table->string('indirizzo_paziente')->nullable();
+            $table->string('citta_paziente')->nullable();
+            $table->string('provncia_paziente')->nullable();
+            $table->string('cap_paziente')->nullable();
+            $table->string('lat_paziente')->nullable();
+            $table->string('lng_paziente')->nullable();
             $table->string('file_path');
             $table->string('file_name_originale');
-            $table->enum('stato_elaborazione', ['caricato', 'in_elaborazione', 'completato', 'errore'])->default('caricato');
+            $table->enum('stato_elaborazione', ['analisi_voci_in_corso', 'attesa_conferma_paziente', 'ricerca_proposte', 'proposte_pronte', 'senza_proposte', 'errore'])->default('analisi_voci_in_corso');
             $table->json('json_preventivo')->nullable();
             $table->timestamps();
         });

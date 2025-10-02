@@ -18,17 +18,6 @@ class ImpostazioniUtenteController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role === 'paziente') {
-            $validatedData = $request->validate([
-                'cellulare' => 'required|string|min:9',
-                'indirizzo' => 'required|string|max:255',
-                'citta'     => 'required|string|max:255',
-                'cap'       => 'required|string|size:5',
-                'provincia' => 'required|string|size:2',
-            ]);
-            $user->anagraficaPaziente()->update($validatedData);
-        }
-
         if ($user->role === 'medico') {
             $validatedData = $request->validate([
                 'ragione_sociale' => 'required|string|max:255',

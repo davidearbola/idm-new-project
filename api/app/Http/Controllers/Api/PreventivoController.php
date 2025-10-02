@@ -16,7 +16,6 @@ use Illuminate\Support\Str;
 
 class PreventivoController extends Controller
 {
-    // ... (il metodo store rimane invariato) ...
     public function store(Request $request)
     {
         if ($request->hasFile('preventivo')) {
