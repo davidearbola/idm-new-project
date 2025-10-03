@@ -18,7 +18,8 @@ const {
   isRicercaProposte,
   isPropostePronte,
   haErrore,
-  isSenzaProposte
+  isSenzaProposte,
+  proposte
 } = storeToRefs(preventivoStore)
 
 const toast = useToast()
@@ -30,6 +31,8 @@ const formUploadRef = ref(null)
 const formDatiPazienteRef = ref(null)
 const pollingInterval = ref(null)
 const vociEditate = ref([])
+const showModalDettagli = ref(false)
+const propostaSelezionata = ref(null)
 
 // --- VALIDATION SCHEMAS ---
 const uploadSchema = yup.object({
@@ -121,6 +124,7 @@ watch(statoElaborazione, (newStatus) => {
   }
 
   if (newStatus === 'proposte_pronte') {
+    console.log('Proposte ricevute:', proposte.value)
     toast.success('Abbiamo trovato delle proposte per te!')
     stopPolling()
   }
@@ -177,6 +181,37 @@ const handleSalvaDatiPaziente = async (values) => {
   } else {
     toast.error(response.message)
   }
+}
+
+// --- MODALE DETTAGLI ---
+const apriDettagli = (proposta) => {
+  console.log('Proposta selezionata:', proposta)
+  console.log('JSON proposta:', proposta.json_proposta)
+  propostaSelezionata.value = proposta
+  showModalDettagli.value = true
+}
+
+const chiudiDettagli = () => {
+  showModalDettagli.value = false
+  propostaSelezionata.value = null
+}
+
+const calcolaTotaleOriginale = computed(() => {
+  if (!vociPreventivo.value) return 0
+  return vociPreventivo.value.reduce((acc, voce) => acc + parseFloat(voce.prezzo || 0), 0)
+})
+
+const calcolaTotaleProposta = (proposta) => {
+  if (!proposta?.json_proposta) return 0
+  // Se il totale è già calcolato nel JSON, usalo
+  if (proposta.json_proposta.totale_proposta !== undefined) {
+    return parseFloat(proposta.json_proposta.totale_proposta || 0)
+  }
+  // Altrimenti calcolalo dalle voci
+  if (proposta.json_proposta.voci_proposta) {
+    return proposta.json_proposta.voci_proposta.reduce((acc, voce) => acc + parseFloat(voce.prezzo || 0), 0)
+  }
+  return 0
 }
 
 // --- RESET ---
@@ -426,13 +461,43 @@ onUnmounted(() => {
             </div>
 
             <!-- SUCCESS: PROPOSTE PRONTE -->
-            <div v-else-if="isPropostePronte" class="text-center p-5">
-              <i class="fa-solid fa-circle-check fa-4x text-success mb-4"></i>
-              <h3 class="fw-bold">Proposte trovate!</h3>
-              <p class="text-muted">
-                Abbiamo trovato delle proposte per te. Ti contatteremo a breve via email con i dettagli.
-              </p>
-              <button @click="resetAll" class="btn btn-primary mt-3">Carica un altro preventivo</button>
+            <div v-else-if="isPropostePronte">
+              <div class="text-center mb-4">
+                <i class="fa-solid fa-circle-check fa-4x text-success mb-3"></i>
+                <h3 class="fw-bold">Proposte trovate!</h3>
+                <p class="text-muted">
+                  Abbiamo trovato {{ proposte.length }} {{ proposte.length === 1 ? 'proposta' : 'proposte' }} per te
+                </p>
+              </div>
+
+              <div class="row g-4">
+                <div v-for="proposta in proposte" :key="proposta.id" class="col-md-6">
+                  <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                      <h5 class="card-title fw-bold text-primary mb-3">
+                        {{ proposta.medico?.anagrafica_medico?.ragione_sociale || 'Studio Medico' }}
+                      </h5>
+                      <p class="text-muted small mb-3">
+                        <i class="fa-solid fa-location-dot me-2"></i>
+                        {{ proposta.medico?.anagrafica_medico?.indirizzo || 'Indirizzo non disponibile' }}
+                      </p>
+                      <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Prezzo Totale:</span>
+                        <span class="fs-4 fw-bold text-success">
+                          € {{ formatCurrency(calcolaTotaleProposta(proposta)) }}
+                        </span>
+                      </div>
+                      <button @click="apriDettagli(proposta)" class="btn btn-outline-primary w-100">
+                        <i class="fa-solid fa-eye me-2"></i>Vedi Dettagli
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-center mt-4">
+                <button @click="resetAll" class="btn btn-secondary">Carica un altro preventivo</button>
+              </div>
             </div>
 
             <!-- NO PROPOSTE -->
@@ -445,6 +510,105 @@ onUnmounted(() => {
               <button @click="resetAll" class="btn btn-primary mt-3">Carica un altro preventivo</button>
             </div>
 
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODALE CONFRONTO PREVENTIVO-PROPOSTA -->
+    <div v-if="showModalDettagli" class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Confronto Preventivo - Proposta</h5>
+            <button type="button" class="btn-close" @click="chiudiDettagli"></button>
+          </div>
+          <div class="modal-body">
+            <div v-if="propostaSelezionata" class="row">
+              <!-- Preventivo Originale -->
+              <div class="col-md-6">
+                <h5 class="fw-bold text-primary mb-3">
+                  <i class="fa-solid fa-file-invoice me-2"></i>Preventivo Originale
+                </h5>
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Prestazione</th>
+                          <th>Qnt</th>
+                          <th class="text-end">Prezzo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(voce, index) in vociPreventivo" :key="'orig-' + index">
+                          <td>{{ voce.prestazione }}</td>
+                          <td>{{ voce.quantità }}</td>
+                          <td class="text-end">€ {{ formatCurrency(voce.prezzo) }}</td>
+                        </tr>
+                      </tbody>
+                      <tfoot>
+                        <tr class="fw-bold">
+                          <td colspan="2">Totale</td>
+                          <td class="text-end">€ {{ formatCurrency(calcolaTotaleOriginale) }}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Proposta del Medico -->
+              <div class="col-md-6">
+                <h5 class="fw-bold text-success mb-3">
+                  <i class="fa-solid fa-handshake me-2"></i>Proposta - {{ propostaSelezionata.medico?.anagrafica_medico?.ragione_sociale }}
+                </h5>
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Prestazione</th>
+                          <th>Qnt</th>
+                          <th class="text-end">Prezzo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(voce, index) in propostaSelezionata.json_proposta?.voci_proposta" :key="'prop-' + index">
+                          <td>
+                            <div>{{ voce.prestazione_corrispondente || voce.prestazione_originale }}</div>
+                            <small v-if="voce.prestazione_corrispondente !== voce.prestazione_originale" class="text-muted">
+                              (era: {{ voce.prestazione_originale }})
+                            </small>
+                          </td>
+                          <td>{{ voce.quantità }}</td>
+                          <td class="text-end">€ {{ formatCurrency(voce.prezzo) }}</td>
+                        </tr>
+                      </tbody>
+                      <tfoot>
+                        <tr class="fw-bold">
+                          <td colspan="2">Totale</td>
+                          <td class="text-end text-success">
+                            € {{ formatCurrency(calcolaTotaleProposta(propostaSelezionata)) }}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Risparmio -->
+            <div v-if="propostaSelezionata" class="alert alert-info mt-4 d-flex justify-content-between align-items-center">
+              <span class="fw-bold">Risparmio</span>
+              <span class="fs-5 fw-bold">
+                € {{ formatCurrency(calcolaTotaleOriginale - calcolaTotaleProposta(propostaSelezionata)) }}
+              </span>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="chiudiDettagli">Chiudi</button>
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ export const usePreventivoStore = defineStore('preventivo', {
     vociPreventivo: null,
     messaggioErrore: null,
     proposteDisponibili: false,
+    proposte: [],
     isLoading: false,
     uploadProgress: 0,
   }),
@@ -165,7 +166,8 @@ export const usePreventivoStore = defineStore('preventivo', {
         )
 
         this.statoElaborazione = response.data.stato_elaborazione
-        this.proposteDisponibili = response.data.proposte_pronte
+        this.proposte = response.data.proposte_pronte || []
+        this.proposteDisponibili = this.proposte.length > 0
 
         return {
           success: true,
@@ -187,6 +189,7 @@ export const usePreventivoStore = defineStore('preventivo', {
       this.vociPreventivo = null
       this.messaggioErrore = null
       this.proposteDisponibili = false
+      this.proposte = []
       this.isLoading = false
       this.uploadProgress = 0
     },

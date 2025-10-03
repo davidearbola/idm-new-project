@@ -198,11 +198,13 @@ class PreventivoController extends Controller
      */
     public function proposteStato(PreventivoPaziente $preventivoPaziente)
     {
-        $proposteEsistono = ContropropostaMedico::where('preventivo_paziente_id', $preventivoPaziente->id)->exists();
+        $proposte = ContropropostaMedico::where('preventivo_paziente_id', $preventivoPaziente->id)
+            ->with(['medico.anagraficaMedico'])
+            ->get();
 
         return response()->json([
             'stato_elaborazione' => $preventivoPaziente->stato_elaborazione,
-            'proposte_pronte' => $proposteEsistono,
+            'proposte_pronte' => $proposte,
         ]);
     }
 }
