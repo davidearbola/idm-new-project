@@ -26,12 +26,13 @@ class PropostaGenerataMedicoNotification extends Notification implements ShouldQ
 
     public function toMail(object $notifiable): MailMessage
     {
-        $paziente = $this->proposta->preventivoPaziente->anagraficaPaziente->user;
+        $preventivo = $this->proposta->preventivoPaziente;
+        $nomePaziente = $preventivo->nome_paziente . ' ' . $preventivo->cognome_paziente;
         $url = config('app.frontend_url') . '/dashboard/preventivi-accettati';
         return (new MailMessage)
             ->subject('Nuova Proposta Automatica Generata')
             ->greeting('Buongiorno Dott. ' . $notifiable->name . ',')
-            ->line('Il nostro sistema ha generato automaticamente una nuova proposta per il preventivo di ' . $paziente->name . '.')
+            ->line('Il nostro sistema ha generato automaticamente una nuova proposta per il preventivo di ' . $nomePaziente . '.')
             ->line('Non è richiesta alcuna azione da parte sua. Verrà notificato se il paziente accetterà la proposta.')
             ->action('Vedi i Tuoi Preventivi', $url)
             ->salutation('Cordiali saluti,');

@@ -85,6 +85,10 @@ class GeneraControproposte implements ShouldQueue
             // Aggiorna lo stato del preventivo a proposte_pronte
             $this->preventivo->update(['stato_elaborazione' => 'proposte_pronte']);
 
+            // Invia email al paziente con le proposte
+            \Illuminate\Support\Facades\Notification::route('mail', $this->preventivo->email_paziente)
+                ->notify(new NuovaPropostaNotification($this->preventivo, $mediciVicini->count()));
+
             Log::info("GeneraControproposte Job completato per il preventivo #{$this->preventivo->id}. Trovate {$mediciVicini->count()} proposte.");
 
         } catch (\Exception $e) {

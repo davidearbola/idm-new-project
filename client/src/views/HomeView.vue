@@ -101,7 +101,14 @@ const howItWorksSteps = [
         </div> -->
 
         <div>
-          <RouterLink :to="!user ? 'login' : '/dashboard'" class="btn btn-accent btn-lg px-5 py-3 mt-3 fw-bold text-white">{{ !user ? 'Carica Preventivo Ora' : 'Vai alla tua Dashboard' }}</RouterLink>
+          <RouterLink to="/carica-preventivo" class="btn btn-accent btn-lg px-5 py-3 mt-3 fw-bold text-white">
+            Carica Preventivo Ora
+          </RouterLink>
+          <div class="mt-3">
+            <RouterLink to="/visualizza-proposte" class="text-white text-decoration-underline small">
+              Hai già ricevuto delle proposte? Recuperale qui
+            </RouterLink>
+          </div>
         </div>
       </div>
     </section>

@@ -35,6 +35,7 @@ Route::get('/preventivi/{preventivoPaziente}/stato', [PreventivoController::clas
 Route::post('/preventivi/{preventivoPaziente}/conferma', [PreventivoController::class, 'conferma']);
 Route::post('/preventivi/{preventivoPaziente}/salva-dati-paziente', [PreventivoController::class, 'salvaDatiPaziente']);
 Route::get('/preventivi/{preventivoPaziente}/proposte-stato', [PreventivoController::class, 'proposteStato']);
+Route::post('/preventivi/recupera-proposte', [PreventivoController::class, 'recuperaProposte']);
 
 /*
 |--------------------------------------------------------------------------

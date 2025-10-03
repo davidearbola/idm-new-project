@@ -6,17 +6,19 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\ContropropostaMedico;
+use App\Models\PreventivoPaziente;
 
 class NuovaPropostaNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public $proposta;
+    public $preventivo;
+    public $numeroProposte;
 
-    public function __construct(ContropropostaMedico $proposta)
+    public function __construct(PreventivoPaziente $preventivo, int $numeroProposte)
     {
-        $this->proposta = $proposta;
+        $this->preventivo = $preventivo;
+        $this->numeroProposte = $numeroProposte;
     }
 
     public function via(object $notifiable): array
@@ -26,17 +28,18 @@ class NuovaPropostaNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $medico = $this->proposta->medico;
-        // L'URL punterà al frontend
-        $url = env('FRONTEND_URL') . '/dashboard/proposte';
+        $nomePaziente = $this->preventivo->nome_paziente;
+        $emailPaziente = $this->preventivo->email_paziente;
+        // Crea un link per visualizzare le proposte usando l'email come parametro
+        $url = env('FRONTEND_URL') . '/visualizza-proposte?email=' . urlencode($emailPaziente);
 
         return (new MailMessage)
-                    ->subject('Hai ricevuto una nuova proposta!')
-                    ->greeting('Ciao ' . $notifiable->name . ',')
-                    ->line('Una buona notizia! Lo studio medico "' . $medico->anagraficaMedico->ragione_sociale . '" ti ha inviato una nuova proposta.')
-                    ->line('Accedi alla piattaforma per visualizzare i dettagli e confrontarla con le altre.')
-                    ->action('Vedi le tue proposte', $url)
-            ->line('Grazie per usare la nostra piattaforma!')
-            ->salutation('A presto,');
+            ->subject('Le tue proposte sono pronte!')
+            ->greeting('Ciao ' . $nomePaziente . ',')
+            ->line('Abbiamo trovato ' . $this->numeroProposte . ' ' . ($this->numeroProposte === 1 ? 'proposta' : 'proposte') . ' per il tuo preventivo!')
+            ->line('Clicca sul pulsante qui sotto per visualizzare i dettagli e confrontare le offerte degli studi medici.')
+            ->action('Vedi le tue proposte', $url)
+            ->line('Grazie per aver scelto la nostra piattaforma!')
+            ->salutation('Cordiali saluti,');
     }
 }

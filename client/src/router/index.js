@@ -30,6 +30,12 @@ const router = createRouter({
       component: () => import('../views/CaricaPreventivoView.vue'),
       meta: { layout: 'PublicLayout', showHeader: false, showFooter: false },
     },
+    {
+      path: '/visualizza-proposte',
+      name: 'visualizza-proposte',
+      component: () => import('../views/VisualizzaProposteView.vue'),
+      meta: { layout: 'PublicLayout', showHeader: false, showFooter: false },
+    },
     // **** ROTTE AUTH ****
     {
       path: '/login',

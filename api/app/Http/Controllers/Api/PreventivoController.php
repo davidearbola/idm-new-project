@@ -207,4 +207,40 @@ class PreventivoController extends Controller
             'proposte_pronte' => $proposte,
         ]);
     }
+
+    /**
+     * Recupera le proposte tramite email del paziente.
+     */
+    public function recuperaProposte(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        // Trova tutti i preventivi con questa email
+        $preventivi = PreventivoPaziente::where('email_paziente', $validated['email'])
+            ->where('stato_elaborazione', 'proposte_pronte')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($preventivi->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nessuna proposta trovata per questa email.'
+            ], 404);
+        }
+
+        // Recupera tutte le proposte per questi preventivi
+        $preventiviIds = $preventivi->pluck('id');
+        $proposte = ContropropostaMedico::whereIn('preventivo_paziente_id', $preventiviIds)
+            ->with(['medico.anagraficaMedico', 'preventivoPaziente'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'preventivi' => $preventivi,
+            'proposte' => $proposte,
+        ]);
+    }
 }
