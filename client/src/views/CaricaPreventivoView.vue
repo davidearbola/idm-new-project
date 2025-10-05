@@ -1,12 +1,15 @@
 <script setup>
-import { ref, computed, onUnmounted, watch } from 'vue'
+import { ref, computed, onUnmounted, watch, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Form, Field, ErrorMessage } from 'vee-validate'
 import * as yup from 'yup'
 import { useToast } from 'vue-toastification'
 import { usePreventivoStore } from '@/stores/preventivoStore'
+import { useGeoStore } from '@/stores/geoStore'
 import { storeToRefs } from 'pinia'
 import logoSrc from '@/assets/images/logo-IDM.png'
+import vSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css'
 
 const preventivoStore = usePreventivoStore()
 const {
@@ -24,6 +27,9 @@ const {
   proposte
 } = storeToRefs(preventivoStore)
 
+const geoStore = useGeoStore()
+const { provinces, cities, isLoadingProvinces, isLoadingCities } = storeToRefs(geoStore)
+
 const toast = useToast()
 
 // --- STATO DEL COMPONENTE ---
@@ -35,6 +41,10 @@ const pollingInterval = ref(null)
 const vociEditate = ref([])
 const showModalDettagli = ref(false)
 const propostaSelezionata = ref(null)
+
+// Geo selectors
+const selectedProvince = ref(null)
+const selectedCity = ref(null)
 
 // --- VALIDATION SCHEMAS ---
 const uploadSchema = yup.object({
@@ -220,6 +230,38 @@ const resetAll = () => {
   vociEditate.value = []
   stopPolling()
 }
+
+// --- GEO SELECTORS ---
+onMounted(async () => {
+  await geoStore.fetchProvinces()
+})
+
+watch(selectedProvince, (newProvince, oldProvince) => {
+  if (!oldProvince && !newProvince) return
+  if (newProvince?.initials === oldProvince?.initials) return
+
+  // Aggiorna il campo nel form
+  if (formDatiPazienteRef.value) {
+    formDatiPazienteRef.value.setFieldValue('provincia', newProvince ? newProvince.initials : '')
+  }
+
+  // Resetta la città quando la provincia cambia
+  selectedCity.value = null
+  if (formDatiPazienteRef.value) {
+    formDatiPazienteRef.value.setFieldValue('citta', '')
+    formDatiPazienteRef.value.setFieldValue('cap', '')
+  }
+
+  // Carica i nuovi comuni
+  geoStore.fetchCities(newProvince ? newProvince.initials : null)
+})
+
+watch(selectedCity, (newCity) => {
+  if (newCity && formDatiPazienteRef.value) {
+    formDatiPazienteRef.value.setFieldValue('citta', newCity.name)
+    formDatiPazienteRef.value.setFieldValue('cap', newCity.cap)
+  }
+})
 
 // --- CICLO DI VITA ---
 onUnmounted(() => {
@@ -417,20 +459,41 @@ onUnmounted(() => {
                   </div>
 
                   <div class="col-12 col-md-6">
-                    <label class="form-label small">Città *</label>
-                    <Field name="citta" type="text" class="form-control form-control-sm" />
-                    <ErrorMessage name="citta" class="text-danger small" />
-                  </div>
-
-                  <div class="col-6 col-md-3">
                     <label class="form-label small">Provincia *</label>
-                    <Field name="provincia" type="text" class="form-control form-control-sm" maxlength="2" placeholder="ES: MI" />
-                    <ErrorMessage name="provincia" class="text-danger small" />
+                    <v-select
+                      v-model="selectedProvince"
+                      :options="provinces"
+                      label="name"
+                      placeholder="Seleziona o digita una provincia"
+                      :loading="isLoadingProvinces"
+                      class="form-select-sm"
+                    >
+                      <template #no-options>Nessuna provincia trovata.</template>
+                    </v-select>
+                    <Field name="provincia" type="hidden" />
+                    <ErrorMessage name="provincia" class="text-danger small d-block" />
                   </div>
 
-                  <div class="col-6 col-md-3">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label small">Città *</label>
+                    <v-select
+                      v-model="selectedCity"
+                      :options="cities"
+                      label="name"
+                      placeholder="Seleziona una città"
+                      :loading="isLoadingCities"
+                      :disabled="!selectedProvince || isLoadingCities"
+                      class="form-select-sm"
+                    >
+                      <template #no-options>Nessun comune trovato.</template>
+                    </v-select>
+                    <Field name="citta" type="hidden" />
+                    <ErrorMessage name="citta" class="text-danger small d-block" />
+                  </div>
+
+                  <div class="col-12">
                     <label class="form-label small">CAP *</label>
-                    <Field name="cap" type="text" class="form-control form-control-sm" maxlength="5" />
+                    <Field name="cap" type="text" class="form-control form-control-sm" maxlength="5" readonly />
                     <ErrorMessage name="cap" class="text-danger small" />
                   </div>
                 </div>
@@ -731,5 +794,46 @@ onUnmounted(() => {
   .card-title {
     word-break: break-word;
   }
+}
+
+/* Vue Select Styling */
+.vs__dropdown-toggle {
+  border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  padding: 0.25rem 0.5rem;
+  min-height: 31px;
+}
+
+.vs__search {
+  padding: 0;
+  margin: 0;
+}
+
+.vs__search::placeholder {
+  font-size: 0.875rem;
+}
+
+.vs--open .vs__dropdown-toggle {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
+}
+
+.vs__selected {
+  font-size: 0.875rem;
+  margin: 0;
+  padding: 0;
+}
+
+.vs__actions {
+  padding: 0 4px;
+}
+
+.vs__clear,
+.vs__open-indicator {
+  fill: #495057;
+}
+
+.vs__dropdown-menu {
+  font-size: 0.875rem;
 }
 </style>
