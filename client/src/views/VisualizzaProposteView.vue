@@ -236,12 +236,6 @@ const tornaAllaRicerca = () => {
                 </h5>
                 <div class="card bg-light">
                   <div class="card-body">
-                    <div class="mb-3">
-                      <small class="text-muted">
-                        <i class="fa-solid fa-location-dot me-1"></i>
-                        {{ propostaSelezionata.medico?.anagrafica_medico?.indirizzo || 'N/A' }}
-                      </small>
-                    </div>
                     <table class="table table-sm">
                       <thead>
                         <tr>
@@ -277,7 +271,8 @@ const tornaAllaRicerca = () => {
             </div>
 
             <!-- Risparmio -->
-            <div v-if="propostaSelezionata" class="alert alert-info mt-4 d-flex justify-content-between align-items-center">
+            <div v-if="propostaSelezionata" class="alert mt-4 d-flex justify-content-between align-items-center" 
+            :class="formatCurrency(calcolaTotaleOriginale - calcolaTotaleProposta(propostaSelezionata)) >= 0 ? 'alert-info' : 'alert-danger' ">
               <span class="fw-bold">Risparmio</span>
               <span class="fs-5 fw-bold">
                 € {{ formatCurrency(calcolaTotaleOriginale - calcolaTotaleProposta(propostaSelezionata)) }}
