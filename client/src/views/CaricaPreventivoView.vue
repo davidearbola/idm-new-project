@@ -611,7 +611,8 @@ onUnmounted(() => {
             </div>
 
             <!-- Risparmio -->
-            <div v-if="propostaSelezionata" class="alert alert-info mt-2 mt-md-3 mb-0 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+            <div v-if="propostaSelezionata" class="alert mt-2 mt-md-3 mb-0 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2"
+            :class="(calcolaTotaleOriginale - calcolaTotaleProposta(propostaSelezionata)) >= 0 ? 'alert-success' : 'alert-danger' ">
               <span class="fw-bold small">Risparmio</span>
               <span class="fs-6 fs-md-5 fw-bold">
                 € {{ formatCurrency(calcolaTotaleOriginale - calcolaTotaleProposta(propostaSelezionata)) }}

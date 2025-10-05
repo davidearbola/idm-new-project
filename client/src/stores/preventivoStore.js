@@ -104,6 +104,8 @@ export const usePreventivoStore = defineStore('preventivo', {
 
         if (response.data.success) {
           this.statoElaborazione = 'attesa_dati_paziente'
+          // Aggiorna le voci nello store con quelle confermate
+          this.vociPreventivo = voci
           return { success: true, message: response.data.message }
         }
 
@@ -168,6 +170,11 @@ export const usePreventivoStore = defineStore('preventivo', {
         this.statoElaborazione = response.data.stato_elaborazione
         this.proposte = response.data.proposte_pronte || []
         this.proposteDisponibili = this.proposte.length > 0
+
+        // Aggiorna anche le voci del preventivo con quelle confermate dal paziente
+        if (response.data.voci_preventivo) {
+          this.vociPreventivo = response.data.voci_preventivo
+        }
 
         return {
           success: true,

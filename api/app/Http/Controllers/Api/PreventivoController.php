@@ -205,6 +205,7 @@ class PreventivoController extends Controller
         return response()->json([
             'stato_elaborazione' => $preventivoPaziente->stato_elaborazione,
             'proposte_pronte' => $proposte,
+            'voci_preventivo' => $preventivoPaziente->json_preventivo['voci_preventivo'] ?? [],
         ]);
     }
 
