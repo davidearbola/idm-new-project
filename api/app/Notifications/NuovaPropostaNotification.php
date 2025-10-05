@@ -28,7 +28,7 @@ class NuovaPropostaNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $nomePaziente = $this->preventivo->nome_paziente;
+        $nomePaziente = $this->preventivo->nome_paziente ?? 'Cliente';
         $emailPaziente = $this->preventivo->email_paziente;
         // Crea un link per visualizzare le proposte usando l'email come parametro
         $url = env('FRONTEND_URL') . '/visualizza-proposte?email=' . urlencode($emailPaziente);

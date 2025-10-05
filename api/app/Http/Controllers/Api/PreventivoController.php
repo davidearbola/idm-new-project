@@ -156,9 +156,9 @@ class PreventivoController extends Controller
 
         $validated = $request->validate([
             'email' => 'required|email|max:255',
-            'cellulare' => 'required|string|min:9',
-            'nome' => 'required|string|max:255',
-            'cognome' => 'required|string|max:255',
+            'cellulare' => 'nullable|string|min:9',
+            'nome' => 'nullable|string|max:255',
+            'cognome' => 'nullable|string|max:255',
             'indirizzo' => 'required|string|max:255',
             'citta' => 'required|string|max:255',
             'provincia' => 'required|string|size:2',
@@ -172,9 +172,9 @@ class PreventivoController extends Controller
         // Salva i dati del paziente
         $preventivoPaziente->update([
             'email_paziente' => $validated['email'],
-            'cellulare_paziente' => $validated['cellulare'],
-            'nome_paziente' => $validated['nome'],
-            'cognome_paziente' => $validated['cognome'],
+            'cellulare_paziente' => $validated['cellulare'] ?? null,
+            'nome_paziente' => $validated['nome'] ?? null,
+            'cognome_paziente' => $validated['cognome'] ?? null,
             'indirizzo_paziente' => $validated['indirizzo'],
             'citta_paziente' => $validated['citta'],
             'provincia_paziente' => $validated['provincia'],

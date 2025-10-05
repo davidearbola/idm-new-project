@@ -51,9 +51,6 @@ const uploadSchema = yup.object({
 
 const datiPazienteSchema = yup.object({
   email: yup.string().required("L'email è obbligatoria").email('Email non valida'),
-  cellulare: yup.string().required('Il cellulare è obbligatorio').min(9, 'Numero non valido'),
-  nome: yup.string().required('Il nome è obbligatorio'),
-  cognome: yup.string().required('Il cognome è obbligatorio'),
   indirizzo: yup.string().required("L'indirizzo è obbligatorio"),
   citta: yup.string().required('La città è obbligatoria'),
   provincia: yup.string().required('La provincia è obbligatoria').length(2, 'La sigla deve essere di 2 lettere'),
@@ -407,28 +404,10 @@ onUnmounted(() => {
 
               <Form @submit="handleSalvaDatiPaziente" :validation-schema="datiPazienteSchema" ref="formDatiPazienteRef">
                 <div class="row g-2 g-md-3">
-                  <div class="col-12 col-md-6">
+                  <div class="col-12">
                     <label class="form-label small">Email *</label>
                     <Field name="email" type="email" class="form-control form-control-sm" />
                     <ErrorMessage name="email" class="text-danger small" />
-                  </div>
-
-                  <div class="col-12 col-md-6">
-                    <label class="form-label small">Cellulare *</label>
-                    <Field name="cellulare" type="tel" class="form-control form-control-sm" />
-                    <ErrorMessage name="cellulare" class="text-danger small" />
-                  </div>
-
-                  <div class="col-12 col-md-6">
-                    <label class="form-label small">Nome *</label>
-                    <Field name="nome" type="text" class="form-control form-control-sm" />
-                    <ErrorMessage name="nome" class="text-danger small" />
-                  </div>
-
-                  <div class="col-12 col-md-6">
-                    <label class="form-label small">Cognome *</label>
-                    <Field name="cognome" type="text" class="form-control form-control-sm" />
-                    <ErrorMessage name="cognome" class="text-danger small" />
                   </div>
 
                   <div class="col-12">
