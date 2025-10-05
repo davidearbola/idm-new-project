@@ -100,7 +100,7 @@ const handleUpload = async () => {
   const response = await preventivoStore.caricaPreventivo(preventivoFile.value)
 
   if (response.success) {
-    toast.info('Il tuo preventivo è in fase di analisi. Attendi...')
+    // Avvia immediatamente il polling - il loader si mostrerà automaticamente
     startPolling(preventivoStore.controllaStato)
   } else {
     toast.error(response.message)
@@ -289,7 +289,7 @@ onUnmounted(() => {
           <div class="card-body p-3 p-sm-4 p-md-5">
 
             <!-- STEP 1: UPLOAD FILE -->
-            <div v-if="!statoElaborazione || statoElaborazione === 'caricato' || haErrore">
+            <div v-if="!statoElaborazione || haErrore">
               <!-- Messaggio errore -->
               <div v-if="haErrore" class="alert alert-danger mb-3 mb-md-4">
                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
@@ -360,11 +360,18 @@ onUnmounted(() => {
               </Form>
             </div>
 
+            <!-- LOADING: PREVENTIVO CARICATO -->
+            <div v-else-if="statoElaborazione === 'caricato'" class="text-center p-3 p-sm-4 p-md-5">
+              <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem"></div>
+              <h4 class="mt-3 mt-md-4 fs-5 fs-md-4">Grazie per aver condiviso il tuo preventivo!</h4>
+              <p class="text-muted small mb-0">Ci occuperemo di analizzarlo immediatamente.</p>
+            </div>
+
             <!-- LOADING: ELABORAZIONE IN CORSO -->
             <div v-else-if="statoElaborazione === 'in_elaborazione'" class="text-center p-3 p-sm-4 p-md-5">
               <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem"></div>
-              <h4 class="mt-3 mt-md-4 fs-5 fs-md-4">Stiamo elaborando il tuo preventivo...</h4>
-              <p class="text-muted small mb-0">Questa operazione potrebbe richiedere fino a un minuto.</p>
+              <h4 class="mt-3 mt-md-4 fs-5 fs-md-4">Preventivo in fase di analisi</h4>
+              <p class="text-muted small mb-0">Tra pochi istanti ti mostreremo il risultato dell'analisi.</p>
             </div>
 
             <!-- STEP 2: CONFERMA VOCI -->
