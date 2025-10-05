@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed, onUnmounted, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 import { Form, Field, ErrorMessage } from 'vee-validate'
 import * as yup from 'yup'
 import { useToast } from 'vue-toastification'
 import { usePreventivoStore } from '@/stores/preventivoStore'
 import { storeToRefs } from 'pinia'
+import logoSrc from '@/assets/images/logo-IDM.png'
 
 const preventivoStore = usePreventivoStore()
 const {
@@ -232,6 +234,13 @@ onUnmounted(() => {
   <div class="container py-5">
     <div class="row justify-content-center">
       <div class="col-lg-10">
+        <!-- Logo -->
+        <div class="text-center mb-4">
+          <RouterLink to="/">
+            <img :src="logoSrc" alt="Il Dentista Migliore Logo" style="height: 3rem;">
+          </RouterLink>
+        </div>
+
         <h1 class="display-5 fw-bold text-center mb-3">Carica il Tuo Preventivo</h1>
         <p class="lead text-muted text-center mb-5">
           Carica il tuo preventivo e ricevi proposte personalizzate dai migliori studi medici della tua zona

@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import axios from 'axios'
+import logoSrc from '@/assets/images/logo-IDM.png'
 
 const route = useRoute()
 const toast = useToast()
@@ -101,6 +102,13 @@ const tornaAllaRicerca = () => {
   <div class="container py-5">
     <div class="row justify-content-center">
       <div class="col-lg-10">
+        <!-- Logo -->
+        <div class="text-center mb-4">
+          <RouterLink to="/">
+            <img :src="logoSrc" alt="Il Dentista Migliore Logo" style="height: 3rem;">
+          </RouterLink>
+        </div>
+
         <h1 class="display-5 fw-bold text-center mb-3">Le Tue Proposte</h1>
         <p class="lead text-muted text-center mb-5">
           Visualizza e confronta le proposte ricevute dagli studi medici
