@@ -231,48 +231,50 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="container py-5">
+  <div class="container-fluid px-3 px-md-4 py-4 py-md-5">
     <div class="row justify-content-center">
-      <div class="col-lg-10">
+      <div class="col-12 col-lg-10 col-xl-9">
         <!-- Logo -->
-        <div class="text-center mb-4">
+        <div class="text-center mb-3 mb-md-4">
           <RouterLink to="/">
-            <img :src="logoSrc" alt="Il Dentista Migliore Logo" style="height: 3rem;">
+            <img :src="logoSrc" alt="Il Dentista Migliore Logo" class="logo-responsive">
           </RouterLink>
         </div>
 
-        <h1 class="display-5 fw-bold text-center mb-3">Carica il Tuo Preventivo</h1>
-        <p class="lead text-muted text-center mb-5">
+        <h1 class="responsive-title fw-bold text-center mb-2 mb-md-3">Carica il Tuo Preventivo</h1>
+        <p class="responsive-lead text-muted text-center mb-4 mb-md-5 px-2">
           Carica il tuo preventivo e ricevi proposte personalizzate dai migliori studi medici della tua zona
         </p>
 
         <div class="card border-0 shadow-sm">
-          <div class="card-body p-4 p-md-5">
+          <div class="card-body p-3 p-sm-4 p-md-5">
 
             <!-- STEP 1: UPLOAD FILE -->
             <div v-if="!statoElaborazione || statoElaborazione === 'caricato' || haErrore">
               <!-- Messaggio errore -->
-              <div v-if="haErrore" class="alert alert-danger d-flex justify-content-between align-items-center mb-4">
-                <div>
-                  <p class="fw-bold mb-0">Si è verificato un errore</p>
-                  <small>{{ messaggioErrore }}</small>
+              <div v-if="haErrore" class="alert alert-danger mb-3 mb-md-4">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+                  <div>
+                    <p class="fw-bold mb-1 mb-sm-0 small">Si è verificato un errore</p>
+                    <small class="d-block d-sm-inline">{{ messaggioErrore }}</small>
+                  </div>
+                  <button @click="resetAll" class="btn btn-sm btn-danger flex-shrink-0">Riprova</button>
                 </div>
-                <button @click="resetAll" class="btn btn-sm btn-danger">Riprova</button>
               </div>
 
               <Form @submit="handleUpload" :validation-schema="uploadSchema" ref="formUploadRef">
                 <div
-                  class="upload-area text-center p-5 rounded-3 border-2"
+                  class="upload-area text-center p-3 p-sm-4 p-md-5 rounded-3 border-2"
                   :class="{ dragging: isDragging, 'has-file': preventivoFile }"
                   @dragover.prevent="isDragging = true"
                   @dragleave.prevent="isDragging = false"
                   @drop.prevent="handleDrop"
                 >
                   <div v-if="!preventivoFile">
-                    <i class="fa-solid fa-cloud-arrow-up fa-3x text-muted mb-3"></i>
-                    <h5 class="fw-bold">Trascina il tuo file qui</h5>
-                    <p class="text-muted">oppure</p>
-                    <label for="file-input" class="btn btn-primary">Seleziona File</label>
+                    <i class="fa-solid fa-cloud-arrow-up fa-2x fa-md-3x text-muted mb-2 mb-md-3"></i>
+                    <h5 class="fw-bold fs-6 fs-md-5">Trascina il tuo file qui</h5>
+                    <p class="text-muted small mb-2">oppure</p>
+                    <label for="file-input" class="btn btn-primary btn-sm btn-md-md">Seleziona File</label>
                     <input
                       type="file"
                       id="file-input"
@@ -280,13 +282,13 @@ onUnmounted(() => {
                       accept=".pdf,.jpg,.jpeg,.png"
                       class="d-none"
                     />
-                    <p class="text-muted small mt-3">Formati accettati: PDF, JPG, PNG (max 10MB)</p>
+                    <p class="text-muted small mt-2 mt-md-3 mb-0">Formati accettati: PDF, JPG, PNG (max 10MB)</p>
                   </div>
                   <div v-else class="file-preview">
-                    <i class="fa-solid fa-file-invoice fa-3x text-primary mb-3"></i>
-                    <p class="fw-bold mb-1">{{ preventivoFile.name }}</p>
-                    <p class="text-muted small">{{ (preventivoFile.size / 1024).toFixed(2) }} KB</p>
-                    <button type="button" @click="removeFile" class="btn btn-sm btn-danger mt-2">
+                    <i class="fa-solid fa-file-invoice fa-2x fa-md-3x text-primary mb-2 mb-md-3"></i>
+                    <p class="fw-bold mb-1 text-truncate px-2" :title="preventivoFile.name">{{ preventivoFile.name }}</p>
+                    <p class="text-muted small mb-2">{{ (preventivoFile.size / 1024).toFixed(2) }} KB</p>
+                    <button type="button" @click="removeFile" class="btn btn-sm btn-danger mt-1 mt-md-2">
                       Rimuovi
                     </button>
                   </div>
@@ -309,38 +311,39 @@ onUnmounted(() => {
                   </div>
                 </div>
 
-                <div class="text-end mt-4">
+                <div class="d-grid d-sm-flex justify-content-sm-end mt-3 mt-md-4">
                   <button type="submit" class="btn btn-primary btn-lg" :disabled="isLoading || !preventivoFile">
                     <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"></span>
-                    {{ isLoading ? 'Caricamento...' : 'Carica Preventivo' }}
+                    <span class="d-none d-sm-inline">{{ isLoading ? 'Caricamento...' : 'Carica Preventivo' }}</span>
+                    <span class="d-sm-none">{{ isLoading ? 'Caricamento...' : 'Carica' }}</span>
                   </button>
                 </div>
               </Form>
             </div>
 
             <!-- LOADING: ELABORAZIONE IN CORSO -->
-            <div v-else-if="statoElaborazione === 'in_elaborazione'" class="text-center p-5">
-              <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem"></div>
-              <h4 class="mt-4">Stiamo elaborando il tuo preventivo...</h4>
-              <p class="text-muted">Questa operazione potrebbe richiedere fino a un minuto.</p>
+            <div v-else-if="statoElaborazione === 'in_elaborazione'" class="text-center p-3 p-sm-4 p-md-5">
+              <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem"></div>
+              <h4 class="mt-3 mt-md-4 fs-5 fs-md-4">Stiamo elaborando il tuo preventivo...</h4>
+              <p class="text-muted small mb-0">Questa operazione potrebbe richiedere fino a un minuto.</p>
             </div>
 
             <!-- STEP 2: CONFERMA VOCI -->
             <div v-else-if="isElaborazioneCompletata">
-              <h3 class="mb-3">Verifica le voci del preventivo</h3>
-              <p class="text-muted">
+              <h3 class="mb-2 mb-md-3 fs-4 fs-md-3">Verifica le voci del preventivo</h3>
+              <p class="text-muted small mb-3 mb-md-4">
                 Abbiamo estratto queste informazioni dal file che hai caricato. Controllale e, se necessario,
                 modificane i valori prima di continuare.
               </p>
 
               <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle">
-                  <thead>
+                <table class="table table-striped table-hover align-middle table-sm">
+                  <thead class="table-light">
                     <tr>
-                      <th scope="col">Prestazione</th>
-                      <th scope="col" style="width: 120px">Quantità</th>
-                      <th scope="col" style="width: 150px">Prezzo (€)</th>
-                      <th scope="col" style="width: 80px"></th>
+                      <th scope="col" class="small">Prestazione</th>
+                      <th scope="col" class="small" style="width: 80px">Qnt</th>
+                      <th scope="col" class="small" style="width: 100px">Prezzo (€)</th>
+                      <th scope="col" style="width: 50px"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -348,26 +351,26 @@ onUnmounted(() => {
                       <td>
                         <input
                           type="text"
-                          class="form-control"
+                          class="form-control form-control-sm"
                           v-model="voce.prestazione"
                           placeholder="Nome prestazione"
                         />
                       </td>
                       <td>
-                        <input type="number" class="form-control" v-model.number="voce.quantità" min="1" />
+                        <input type="number" class="form-control form-control-sm" v-model.number="voce.quantità" min="1" />
                       </td>
                       <td>
                         <input
                           type="number"
-                          class="form-control"
+                          class="form-control form-control-sm"
                           v-model.number="voce.prezzo"
                           step="0.01"
                           placeholder="0.00"
                         />
                       </td>
                       <td class="text-center">
-                        <button @click="removeVoce(index)" class="btn btn-sm btn-outline-danger" title="Rimuovi riga">
-                          <i class="fa-solid fa-trash-can"></i>
+                        <button @click="removeVoce(index)" class="btn btn-sm btn-outline-danger p-1" title="Rimuovi riga">
+                          <i class="fa-solid fa-trash-can fa-xs"></i>
                         </button>
                       </td>
                     </tr>
@@ -375,17 +378,20 @@ onUnmounted(() => {
                 </table>
               </div>
 
-              <button @click="addVoce" class="btn btn-sm btn-outline-secondary">
-                <i class="fa-solid fa-plus me-1"></i> Aggiungi riga
+              <button @click="addVoce" class="btn btn-sm btn-outline-secondary mb-3">
+                <i class="fa-solid fa-plus me-1"></i> <span class="d-none d-sm-inline">Aggiungi riga</span><span class="d-sm-none">Aggiungi</span>
               </button>
 
-              <div class="text-end mt-4 fs-5 fw-bold">Totale Stimato: € {{ formatCurrency(totalPreventivo) }}</div>
+              <div class="text-end mt-3 mt-md-4 fs-6 fs-md-5 fw-bold">Totale Stimato: € {{ formatCurrency(totalPreventivo) }}</div>
 
-              <hr class="my-4" />
+              <hr class="my-3 my-md-4" />
 
-              <div class="d-flex justify-content-between align-items-center">
-                <button @click="resetAll" class="btn btn-secondary">Annulla e ricarica</button>
-                <button @click="handleConfermaVoci" class="btn btn-primary btn-lg" :disabled="isLoading">
+              <div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2">
+                <button @click="resetAll" class="btn btn-secondary order-2 order-sm-1">
+                  <span class="d-none d-sm-inline">Annulla e ricarica</span>
+                  <span class="d-sm-none">Annulla</span>
+                </button>
+                <button @click="handleConfermaVoci" class="btn btn-primary btn-lg order-1 order-sm-2" :disabled="isLoading">
                   <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"></span>
                   Conferma Voci
                 </button>
@@ -394,129 +400,138 @@ onUnmounted(() => {
 
             <!-- STEP 3: INSERIMENTO DATI PAZIENTE -->
             <div v-else-if="isInAttesaDatiPaziente">
-              <h3 class="mb-3">I tuoi dati personali</h3>
-              <p class="text-muted">
+              <h3 class="mb-2 mb-md-3 fs-4 fs-md-3">I tuoi dati personali</h3>
+              <p class="text-muted small mb-3 mb-md-4">
                 Per completare la richiesta e ricevere le proposte, abbiamo bisogno di alcuni tuoi dati.
               </p>
 
               <Form @submit="handleSalvaDatiPaziente" :validation-schema="datiPazienteSchema" ref="formDatiPazienteRef">
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label">Email *</label>
-                    <Field name="email" type="email" class="form-control" />
+                <div class="row g-2 g-md-3">
+                  <div class="col-12 col-md-6">
+                    <label class="form-label small">Email *</label>
+                    <Field name="email" type="email" class="form-control form-control-sm" />
                     <ErrorMessage name="email" class="text-danger small" />
                   </div>
 
-                  <div class="col-md-6">
-                    <label class="form-label">Cellulare *</label>
-                    <Field name="cellulare" type="tel" class="form-control" />
+                  <div class="col-12 col-md-6">
+                    <label class="form-label small">Cellulare *</label>
+                    <Field name="cellulare" type="tel" class="form-control form-control-sm" />
                     <ErrorMessage name="cellulare" class="text-danger small" />
                   </div>
 
-                  <div class="col-md-6">
-                    <label class="form-label">Nome *</label>
-                    <Field name="nome" type="text" class="form-control" />
+                  <div class="col-12 col-md-6">
+                    <label class="form-label small">Nome *</label>
+                    <Field name="nome" type="text" class="form-control form-control-sm" />
                     <ErrorMessage name="nome" class="text-danger small" />
                   </div>
 
-                  <div class="col-md-6">
-                    <label class="form-label">Cognome *</label>
-                    <Field name="cognome" type="text" class="form-control" />
+                  <div class="col-12 col-md-6">
+                    <label class="form-label small">Cognome *</label>
+                    <Field name="cognome" type="text" class="form-control form-control-sm" />
                     <ErrorMessage name="cognome" class="text-danger small" />
                   </div>
 
                   <div class="col-12">
-                    <label class="form-label">Indirizzo *</label>
-                    <Field name="indirizzo" type="text" class="form-control" placeholder="Via/Piazza, numero civico" />
+                    <label class="form-label small">Indirizzo *</label>
+                    <Field name="indirizzo" type="text" class="form-control form-control-sm" placeholder="Via/Piazza, numero civico" />
                     <ErrorMessage name="indirizzo" class="text-danger small" />
                   </div>
 
-                  <div class="col-md-6">
-                    <label class="form-label">Città *</label>
-                    <Field name="citta" type="text" class="form-control" />
+                  <div class="col-12 col-md-6">
+                    <label class="form-label small">Città *</label>
+                    <Field name="citta" type="text" class="form-control form-control-sm" />
                     <ErrorMessage name="citta" class="text-danger small" />
                   </div>
 
-                  <div class="col-md-3">
-                    <label class="form-label">Provincia *</label>
-                    <Field name="provincia" type="text" class="form-control" maxlength="2" placeholder="ES: MI" />
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small">Provincia *</label>
+                    <Field name="provincia" type="text" class="form-control form-control-sm" maxlength="2" placeholder="ES: MI" />
                     <ErrorMessage name="provincia" class="text-danger small" />
                   </div>
 
-                  <div class="col-md-3">
-                    <label class="form-label">CAP *</label>
-                    <Field name="cap" type="text" class="form-control" maxlength="5" />
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small">CAP *</label>
+                    <Field name="cap" type="text" class="form-control form-control-sm" maxlength="5" />
                     <ErrorMessage name="cap" class="text-danger small" />
                   </div>
                 </div>
 
-                <hr class="my-4" />
+                <hr class="my-3 my-md-4" />
 
-                <div class="d-flex justify-content-between align-items-center">
-                  <button type="button" @click="resetAll" class="btn btn-secondary">Annulla</button>
-                  <button type="submit" class="btn btn-primary btn-lg" :disabled="isLoading">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2">
+                  <button type="button" @click="resetAll" class="btn btn-secondary order-2 order-sm-1">Annulla</button>
+                  <button type="submit" class="btn btn-primary btn-lg order-1 order-sm-2" :disabled="isLoading">
                     <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"></span>
-                    Invia e Cerca Proposte
+                    <span class="d-none d-sm-inline">Invia e Cerca Proposte</span>
+                    <span class="d-sm-none">Invia</span>
                   </button>
                 </div>
               </Form>
             </div>
 
             <!-- LOADING: RICERCA PROPOSTE -->
-            <div v-else-if="isRicercaProposte" class="text-center p-5">
-              <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem"></div>
-              <h4 class="mt-4">Stiamo cercando le migliori proposte per te...</h4>
-              <p class="text-muted">Ti contatteremo a breve con le offerte degli studi medici della tua zona.</p>
+            <div v-else-if="isRicercaProposte" class="text-center p-3 p-sm-4 p-md-5">
+              <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem"></div>
+              <h4 class="mt-3 mt-md-4 fs-5 fs-md-4">Stiamo cercando le migliori proposte per te...</h4>
+              <p class="text-muted small mb-0">Ti contatteremo a breve con le offerte degli studi medici della tua zona.</p>
             </div>
 
             <!-- SUCCESS: PROPOSTE PRONTE -->
             <div v-else-if="isPropostePronte">
-              <div class="text-center mb-4">
-                <i class="fa-solid fa-circle-check fa-4x text-success mb-3"></i>
-                <h3 class="fw-bold">Proposte trovate!</h3>
-                <p class="text-muted">
+              <div class="text-center mb-3 mb-md-4">
+                <i class="fa-solid fa-circle-check fa-3x fa-md-4x text-success mb-2 mb-md-3"></i>
+                <h3 class="fw-bold fs-4 fs-md-3">Proposte trovate!</h3>
+                <p class="text-muted small mb-0">
                   Abbiamo trovato {{ proposte.length }} {{ proposte.length === 1 ? 'proposta' : 'proposte' }} per te
                 </p>
               </div>
 
-              <div class="row g-4">
-                <div v-for="proposta in proposte" :key="proposta.id" class="col-md-6">
+              <div class="row g-3 g-md-4">
+                <div v-for="proposta in proposte" :key="proposta.id" class="col-12 col-md-6">
                   <div class="card h-100 shadow-sm border-0">
-                    <div class="card-body">
-                      <h5 class="card-title fw-bold text-primary mb-3">
+                    <div class="card-body p-3 p-md-4">
+                      <h5 class="card-title fw-bold text-primary mb-2 mb-md-3 fs-6 fs-md-5">
                         {{ proposta.medico?.anagrafica_medico?.ragione_sociale || 'Studio Medico' }}
                       </h5>
-                      <p class="text-muted small mb-3">
-                        <i class="fa-solid fa-location-dot me-2"></i>
-                        {{ proposta.medico?.anagrafica_medico?.indirizzo || 'Indirizzo non disponibile' }}
+                      <p class="text-muted small mb-2 mb-md-3">
+                        <i class="fa-solid fa-location-dot me-1 me-md-2"></i>
+                        <span class="d-inline-block" style="max-width: calc(100% - 20px)">
+                          {{ proposta.medico?.anagrafica_medico?.indirizzo || 'Indirizzo non disponibile' }}
+                        </span>
                       </p>
-                      <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="text-muted">Prezzo Totale:</span>
-                        <span class="fs-4 fw-bold text-success">
+                      <div class="d-flex justify-content-between align-items-center mb-2 mb-md-3">
+                        <span class="text-muted small">Prezzo Totale:</span>
+                        <span class="fs-5 fs-md-4 fw-bold text-success">
                           € {{ formatCurrency(calcolaTotaleProposta(proposta)) }}
                         </span>
                       </div>
-                      <button @click="apriDettagli(proposta)" class="btn btn-outline-primary w-100">
-                        <i class="fa-solid fa-eye me-2"></i>Vedi Dettagli
+                      <button @click="apriDettagli(proposta)" class="btn btn-outline-primary w-100 btn-sm">
+                        <i class="fa-solid fa-eye me-1 me-md-2"></i><span class="d-none d-sm-inline">Vedi Dettagli</span><span class="d-sm-none">Dettagli</span>
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div class="text-center mt-4">
-                <button @click="resetAll" class="btn btn-secondary">Carica un altro preventivo</button>
+              <div class="text-center mt-3 mt-md-4">
+                <button @click="resetAll" class="btn btn-secondary btn-sm">
+                  <span class="d-none d-sm-inline">Carica un altro preventivo</span>
+                  <span class="d-sm-none">Nuovo preventivo</span>
+                </button>
               </div>
             </div>
 
             <!-- NO PROPOSTE -->
-            <div v-else-if="isSenzaProposte" class="text-center p-5">
-              <i class="fa-solid fa-circle-exclamation fa-4x text-warning mb-4"></i>
-              <h3 class="fw-bold">Nessuna proposta disponibile</h3>
-              <p class="text-muted">
+            <div v-else-if="isSenzaProposte" class="text-center p-3 p-sm-4 p-md-5">
+              <i class="fa-solid fa-circle-exclamation fa-3x fa-md-4x text-warning mb-3 mb-md-4"></i>
+              <h3 class="fw-bold fs-4 fs-md-3">Nessuna proposta disponibile</h3>
+              <p class="text-muted small mb-3">
                 Al momento non ci sono studi disponibili nella tua zona. Riprova più tardi o contattaci direttamente.
               </p>
-              <button @click="resetAll" class="btn btn-primary mt-3">Carica un altro preventivo</button>
+              <button @click="resetAll" class="btn btn-primary mt-2 mt-md-3">
+                <span class="d-none d-sm-inline">Carica un altro preventivo</span>
+                <span class="d-sm-none">Nuovo preventivo</span>
+              </button>
             </div>
 
           </div>
@@ -526,98 +541,106 @@ onUnmounted(() => {
 
     <!-- MODALE CONFRONTO PREVENTIVO-PROPOSTA -->
     <div v-if="showModalDettagli" class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-dialog modal-fullscreen-sm-down modal-xl modal-dialog-scrollable">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Confronto Preventivo - Proposta</h5>
+          <div class="modal-header py-2 py-md-3">
+            <h5 class="modal-title fs-6 fs-md-5">Confronto Preventivo - Proposta</h5>
             <button type="button" class="btn-close" @click="chiudiDettagli"></button>
           </div>
-          <div class="modal-body">
-            <div v-if="propostaSelezionata" class="row">
+          <div class="modal-body p-2 p-md-3">
+            <div v-if="propostaSelezionata" class="row g-2 g-md-3">
               <!-- Preventivo Originale -->
-              <div class="col-md-6">
-                <h5 class="fw-bold text-primary mb-3">
-                  <i class="fa-solid fa-file-invoice me-2"></i>Preventivo Originale
+              <div class="col-12 col-md-6">
+                <h5 class="fw-bold text-primary mb-2 mb-md-3 fs-6 fs-md-5">
+                  <i class="fa-solid fa-file-invoice me-1 me-md-2"></i>
+                  <span class="d-none d-sm-inline">Preventivo Originale</span>
+                  <span class="d-sm-none">Originale</span>
                 </h5>
                 <div class="card bg-light">
-                  <div class="card-body">
-                    <table class="table table-sm">
-                      <thead>
-                        <tr>
-                          <th>Prestazione</th>
-                          <th>Qnt</th>
-                          <th class="text-end">Prezzo</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="(voce, index) in vociPreventivo" :key="'orig-' + index">
-                          <td>{{ voce.prestazione }}</td>
-                          <td>{{ voce.quantità }}</td>
-                          <td class="text-end">€ {{ formatCurrency(voce.prezzo) }}</td>
-                        </tr>
-                      </tbody>
-                      <tfoot>
-                        <tr class="fw-bold">
-                          <td colspan="2">Totale</td>
-                          <td class="text-end">€ {{ formatCurrency(calcolaTotaleOriginale) }}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
+                  <div class="card-body p-2 p-md-3">
+                    <div class="table-responsive">
+                      <table class="table table-sm mb-0">
+                        <thead>
+                          <tr>
+                            <th class="small">Prestazione</th>
+                            <th class="small" style="width: 40px">Qnt</th>
+                            <th class="text-end small" style="width: 70px">Prezzo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(voce, index) in vociPreventivo" :key="'orig-' + index">
+                            <td class="small">{{ voce.prestazione }}</td>
+                            <td class="small">{{ voce.quantità }}</td>
+                            <td class="text-end small">€ {{ formatCurrency(voce.prezzo) }}</td>
+                          </tr>
+                        </tbody>
+                        <tfoot>
+                          <tr class="fw-bold">
+                            <td class="small" colspan="2">Totale</td>
+                            <td class="text-end small">€ {{ formatCurrency(calcolaTotaleOriginale) }}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Proposta del Medico -->
-              <div class="col-md-6">
-                <h5 class="fw-bold text-success mb-3">
-                  <i class="fa-solid fa-handshake me-2"></i>Proposta - {{ propostaSelezionata.medico?.anagrafica_medico?.ragione_sociale }}
+              <div class="col-12 col-md-6">
+                <h5 class="fw-bold text-success mb-2 mb-md-3 fs-6 fs-md-5">
+                  <i class="fa-solid fa-handshake me-1 me-md-2"></i>
+                  <span class="d-none d-sm-inline">Proposta - {{ propostaSelezionata.medico?.anagrafica_medico?.ragione_sociale }}</span>
+                  <span class="d-sm-none">Proposta</span>
                 </h5>
                 <div class="card bg-light">
-                  <div class="card-body">
-                    <table class="table table-sm">
-                      <thead>
-                        <tr>
-                          <th>Prestazione</th>
-                          <th>Qnt</th>
-                          <th class="text-end">Prezzo</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="(voce, index) in propostaSelezionata.json_proposta?.voci_proposta" :key="'prop-' + index">
-                          <td>
-                            <div>{{ voce.prestazione_corrispondente || voce.prestazione_originale }}</div>
-                            <small v-if="voce.prestazione_corrispondente !== voce.prestazione_originale" class="text-muted">
-                              (era: {{ voce.prestazione_originale }})
-                            </small>
-                          </td>
-                          <td>{{ voce.quantità }}</td>
-                          <td class="text-end">€ {{ formatCurrency(voce.prezzo) }}</td>
-                        </tr>
-                      </tbody>
-                      <tfoot>
-                        <tr class="fw-bold">
-                          <td colspan="2">Totale</td>
-                          <td class="text-end text-success">
-                            € {{ formatCurrency(calcolaTotaleProposta(propostaSelezionata)) }}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
+                  <div class="card-body p-2 p-md-3">
+                    <div class="table-responsive">
+                      <table class="table table-sm mb-0">
+                        <thead>
+                          <tr>
+                            <th class="small">Prestazione</th>
+                            <th class="small" style="width: 40px">Qnt</th>
+                            <th class="text-end small" style="width: 70px">Prezzo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(voce, index) in propostaSelezionata.json_proposta?.voci_proposta" :key="'prop-' + index">
+                            <td class="small">
+                              <div>{{ voce.prestazione_corrispondente || voce.prestazione_originale }}</div>
+                              <small v-if="voce.prestazione_corrispondente !== voce.prestazione_originale" class="text-muted d-block" style="font-size: 0.7rem">
+                                (era: {{ voce.prestazione_originale }})
+                              </small>
+                            </td>
+                            <td class="small">{{ voce.quantità }}</td>
+                            <td class="text-end small">€ {{ formatCurrency(voce.prezzo) }}</td>
+                          </tr>
+                        </tbody>
+                        <tfoot>
+                          <tr class="fw-bold">
+                            <td class="small" colspan="2">Totale</td>
+                            <td class="text-end text-success small">
+                              € {{ formatCurrency(calcolaTotaleProposta(propostaSelezionata)) }}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Risparmio -->
-            <div v-if="propostaSelezionata" class="alert alert-info mt-4 d-flex justify-content-between align-items-center">
-              <span class="fw-bold">Risparmio</span>
-              <span class="fs-5 fw-bold">
+            <div v-if="propostaSelezionata" class="alert alert-info mt-2 mt-md-3 mb-0 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+              <span class="fw-bold small">Risparmio</span>
+              <span class="fs-6 fs-md-5 fw-bold">
                 € {{ formatCurrency(calcolaTotaleOriginale - calcolaTotaleProposta(propostaSelezionata)) }}
               </span>
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="chiudiDettagli">Chiudi</button>
+          <div class="modal-footer py-2 py-md-3">
+            <button type="button" class="btn btn-secondary btn-sm" @click="chiudiDettagli">Chiudi</button>
           </div>
         </div>
       </div>
@@ -626,17 +649,107 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* Logo responsive */
+.logo-responsive {
+  height: 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .logo-responsive {
+    height: 3rem;
+  }
+}
+
+/* Titoli responsive */
+.responsive-title {
+  font-size: 1.75rem;
+}
+
+@media (min-width: 576px) {
+  .responsive-title {
+    font-size: 2.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-title {
+    font-size: 2.5rem;
+  }
+}
+
+.responsive-lead {
+  font-size: 1rem;
+}
+
+@media (min-width: 768px) {
+  .responsive-lead {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .responsive-lead {
+    font-size: 1.25rem;
+  }
+}
+
+/* Upload area */
 .upload-area {
   border: 2px dashed #dee2e6;
   transition: all 0.3s ease;
   background-color: #f8f9fa;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+@media (min-width: 768px) {
+  .upload-area {
+    min-height: 250px;
+  }
+}
+
 .upload-area.dragging {
   border-color: var(--bs-primary);
   background-color: rgba(var(--bs-primary-rgb), 0.1);
 }
+
 .upload-area.has-file {
   border-color: var(--bs-success);
   background-color: rgba(var(--bs-success-rgb), 0.1);
+}
+
+/* Tabelle responsive */
+@media (max-width: 575.98px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+
+  .table-sm th,
+  .table-sm td {
+    padding: 0.375rem 0.25rem;
+  }
+}
+
+/* Modal responsive */
+@media (max-width: 575.98px) {
+  .modal-fullscreen-sm-down {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .modal-fullscreen-sm-down .modal-content {
+    height: 100vh;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+/* Testi responsive nelle card */
+@media (max-width: 575.98px) {
+  .card-title {
+    word-break: break-word;
+  }
 }
 </style>
