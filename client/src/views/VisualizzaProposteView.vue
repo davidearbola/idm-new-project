@@ -1,12 +1,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { Form, Field, ErrorMessage } from 'vee-validate'
+import * as yup from 'yup'
 import { useToast } from 'vue-toastification'
+import { useTelmarStore } from '@/stores/telmarStore'
 import axios from 'axios'
 import logoSrc from '@/assets/images/logo-IDM.png'
 
 const route = useRoute()
 const toast = useToast()
+const telmarStore = useTelmarStore()
 
 const email = ref('')
 const proposte = ref([])
@@ -15,6 +19,17 @@ const isLoading = ref(false)
 const showEmailForm = ref(true)
 const showModalDettagli = ref(false)
 const propostaSelezionata = ref(null)
+const showModalChiamata = ref(false)
+const propostaPerChiamata = ref(null)
+const isInvioChiamata = ref(false)
+const formChiamataRef = ref(null)
+
+// Validation schema per la chiamata
+const chiamataSchema = yup.object({
+  nome: yup.string().required('Il nome è obbligatorio').max(255),
+  cognome: yup.string().required('Il cognome è obbligatorio').max(255),
+  cellulare: yup.string().required('Il cellulare è obbligatorio').min(9, 'Il cellulare deve essere di almeno 9 cifre').max(20),
+})
 
 // Se l'email è nel query param, carica subito le proposte
 onMounted(() => {
@@ -95,6 +110,42 @@ const tornaAllaRicerca = () => {
   proposte.value = []
   preventivi.value = []
   email.value = ''
+}
+
+// --- MODALE RICHIESTA CHIAMATA ---
+const apriModalChiamata = (proposta) => {
+  propostaPerChiamata.value = proposta
+  showModalChiamata.value = true
+}
+
+const chiudiModalChiamata = () => {
+  showModalChiamata.value = false
+  propostaPerChiamata.value = null
+  if (formChiamataRef.value) {
+    formChiamataRef.value.resetForm()
+  }
+}
+
+const handleRichiediChiamata = async (values) => {
+  if (!propostaPerChiamata.value) return
+
+  isInvioChiamata.value = true
+
+  const response = await telmarStore.richiediChiamata({
+    proposta_id: propostaPerChiamata.value.id,
+    nome: values.nome,
+    cognome: values.cognome,
+    cellulare: values.cellulare,
+  })
+
+  isInvioChiamata.value = false
+
+  if (response.success) {
+    toast.success(response.message)
+    chiudiModalChiamata()
+  } else {
+    toast.error(response.message)
+  }
 }
 </script>
 
@@ -179,9 +230,14 @@ const tornaAllaRicerca = () => {
                           € {{ formatCurrency(calcolaTotaleProposta(proposta)) }}
                         </span>
                       </div>
-                      <button @click="apriDettagli(proposta)" class="btn btn-outline-primary w-100 btn-sm">
-                        <i class="fa-solid fa-eye me-1 me-md-2"></i><span class="d-none d-sm-inline">Vedi Dettagli</span><span class="d-sm-none">Dettagli</span>
-                      </button>
+                      <div class="d-grid gap-2">
+                        <button @click="apriDettagli(proposta)" class="btn btn-outline-primary btn-sm">
+                          <i class="fa-solid fa-eye me-1 me-md-2"></i><span class="d-none d-sm-inline">Vedi Dettagli</span><span class="d-sm-none">Dettagli</span>
+                        </button>
+                        <button @click="apriModalChiamata(proposta)" class="btn btn-success btn-sm">
+                          <i class="fa-solid fa-phone me-1 me-md-2"></i><span class="d-none d-sm-inline">Richiedi Chiamata</span><span class="d-sm-none">Chiamami</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -301,6 +357,56 @@ const tornaAllaRicerca = () => {
           </div>
           <div class="modal-footer py-2 py-md-3">
             <button type="button" class="btn btn-secondary btn-sm" @click="chiudiDettagli">Chiudi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODALE RICHIESTA CHIAMATA -->
+    <div v-if="showModalChiamata" class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5)">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header py-2 py-md-3">
+            <h5 class="modal-title fs-6 fs-md-5">Richiedi una Chiamata</h5>
+            <button type="button" class="btn-close" @click="chiudiModalChiamata"></button>
+          </div>
+          <div class="modal-body p-3 p-md-4">
+            <p class="text-muted small mb-3">
+              Lascia i tuoi dati e ti contatteremo al più presto per discutere questa proposta.
+            </p>
+
+            <Form @submit="handleRichiediChiamata" :validation-schema="chiamataSchema" ref="formChiamataRef">
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label small">Nome *</label>
+                  <Field name="nome" type="text" class="form-control form-control-sm" placeholder="Mario" />
+                  <ErrorMessage name="nome" class="text-danger small d-block" />
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <label class="form-label small">Cognome *</label>
+                  <Field name="cognome" type="text" class="form-control form-control-sm" placeholder="Rossi" />
+                  <ErrorMessage name="cognome" class="text-danger small d-block" />
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label small">Cellulare *</label>
+                  <Field name="cellulare" type="tel" class="form-control form-control-sm" placeholder="3331234567" />
+                  <ErrorMessage name="cellulare" class="text-danger small d-block" />
+                </div>
+              </div>
+
+              <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-4">
+                <button type="button" @click="chiudiModalChiamata" class="btn btn-secondary btn-sm order-2 order-sm-1">
+                  Annulla
+                </button>
+                <button type="submit" class="btn btn-success btn-sm order-1 order-sm-2" :disabled="isInvioChiamata">
+                  <span v-if="isInvioChiamata" class="spinner-border spinner-border-sm me-2"></span>
+                  <span v-if="!isInvioChiamata"><i class="fa-solid fa-phone me-1"></i></span>
+                  {{ isInvioChiamata ? 'Invio...' : 'Invia Richiesta' }}
+                </button>
+              </div>
+            </Form>
           </div>
         </div>
       </div>

@@ -9,10 +9,11 @@ use App\Models\PreventivoPaziente;
 use App\Models\ContropropostaMedico; 
 use Illuminate\Http\Request;
 use Illuminate\Http\File;
-use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 
 class PreventivoController extends Controller
 {
@@ -243,5 +244,99 @@ class PreventivoController extends Controller
             'preventivi' => $preventivi,
             'proposte' => $proposte,
         ]);
+    }
+
+    /**
+     * Richiedi una chiamata dall'operatore per una proposta specifica.
+     */
+    public function richiediChiamata(Request $request)
+    {
+        $validated = $request->validate([
+            'proposta_id' => 'required|integer|exists:controproposte_medici,id',
+            'nome' => 'required|string|max:255',
+            'cognome' => 'required|string|max:255',
+            'cellulare' => 'required|string|min:9|max:20',
+        ]);
+
+        // Recupera la proposta con i dati del preventivo e del medico
+        $proposta = ContropropostaMedico::with(['preventivoPaziente', 'medico.anagraficaMedico'])
+            ->findOrFail($validated['proposta_id']);
+
+        $preventivo = $proposta->preventivoPaziente;
+
+        // Prepara i dati per la chiamata API esterna
+        $nominativo = trim($validated['nome'] . ' ' . $validated['cognome']);
+        $telefono = $validated['cellulare'];
+
+        // Dati opzionali dal preventivo
+        $indirizzo = $preventivo->indirizzo_paziente ?? '';
+        $citta = $preventivo->citta_paziente ?? '';
+        $cap = $preventivo->cap_paziente ?? '';
+        $provincia = $preventivo->provincia_paziente ?? '';
+
+        // Prepara data e ora correnti nel formato richiesto
+        // Proviamo formato americano MM/dd/yyyy invece di dd/MM/yyyy
+        $now = now();
+        $recallDate = $now->format('m/d/Y'); // es: 10/13/2025 (formato americano)
+        $recallTime = $now->format('H:i');   // es: 15:37
+        $recallTimeTo = $now->copy()->addMinutes(15)->format('H:i'); // +15 minuti
+
+        // Costruisci i parametri per la chiamata API
+        $params = [
+            'ServicePIN' => '00000001',
+            'Nominativo' => $nominativo,
+            'Telefono' => $telefono,
+            'Indirizzo' => $indirizzo,
+            'Citta' => $citta,
+            'Cap' => $cap,
+            'Provincia' => $provincia,
+            'Prefisso' => '', // Non abbiamo questo dato separato
+            'ExtraFields' => 'Fonte=RichiestaCallbackWeb',
+            'RecallDate' => $recallDate,
+            'RecallTime' => $recallTime,
+            'RecallTimeTo' => $recallTimeTo,
+        ];
+
+        try {
+            // Effettua la chiamata POST all'API esterna
+            $response = Http::asForm()->post('https://novarod.telmar.cloud/T2KWEBAPI/WebServices.asmx/AddLeadEX', $params);
+
+            // Log della risposta per debugging
+            Log::info('Richiesta chiamata operatore - Risposta API Telmar', [
+                'proposta_id' => $validated['proposta_id'],
+                'nominativo' => $nominativo,
+                'telefono' => $telefono,
+                'status_code' => $response->status(),
+                'response_body' => $response->body(),
+            ]);
+
+            // Verifica se la chiamata è andata a buon fine
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Richiesta di chiamata inviata con successo! Ti contatteremo a breve.',
+                ]);
+            } else {
+                Log::error('Errore nella chiamata API Telmar', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Si è verificato un errore durante l\'invio della richiesta. Riprova più tardi.',
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error('Eccezione durante la chiamata API Telmar', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Si è verificato un errore imprevisto. Riprova più tardi.',
+            ], 500);
+        }
     }
 }
