@@ -43,7 +43,7 @@ const getAssetUrl = (path) => {
 
     <div v-else-if="profiloPubblico" class="profilo-container">
       <section class="hero-section text-center p-5 rounded-3 mb-4">
-        <h1 class="display-4 fw-bold">{{ profiloPubblico.anagrafica.ragione_sociale }}</h1>
+        <h1 class="display-4 fw-bold text-white">{{ profiloPubblico.anagrafica.ragione_sociale }}</h1>
         <p class="lead text-white-50">
           <i class="fa-solid fa-location-dot me-2"></i>
           {{ profiloPubblico.anagrafica.indirizzo }}, {{ profiloPubblico.anagrafica.citta }} ({{ profiloPubblico.anagrafica.provincia }})
@@ -81,6 +81,63 @@ const getAssetUrl = (path) => {
                 <h6 class="card-subtitle mb-2 text-primary">{{ membro.ruolo }}</h6>
                 <p v-if="membro.specializzazione" class="card-text text-muted small">{{ membro.specializzazione }}</p>
                 <p v-if="membro.esperienza" class="card-text text-muted small"><em>{{ membro.esperienza }}</em></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-5">
+        <h2 class="mb-4 text-center"><i class="fa-solid fa-star me-2"></i>Recensioni dei Pazienti</h2>
+        <div class="row g-4">
+          <div class="col-md-4">
+            <div class="card review-card shadow-sm h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="card-title mb-0">Maria Rossi</h5>
+                  <div class="stars">
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-solid fa-star text-warning"></i>
+                  </div>
+                </div>
+                <p class="card-text text-muted">Esperienza eccellente! Personale professionale e molto disponibile. Lo studio è moderno e pulito. Mi sono sentita subito a mio agio. Consiglio vivamente!</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card review-card shadow-sm h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="card-title mb-0">Giovanni Bianchi</h5>
+                  <div class="stars">
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-solid fa-star text-warning"></i>
+                  </div>
+                </div>
+                <p class="card-text text-muted">Ottimo rapporto qualità-prezzo. I medici sono competenti e attenti alle esigenze del paziente. Ambiente accogliente e tempi di attesa minimi. Molto soddisfatto del servizio.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card review-card shadow-sm h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="card-title mb-0">Laura Verdi</h5>
+                  <div class="stars">
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-solid fa-star text-warning"></i>
+                    <i class="fa-regular fa-star text-warning"></i>
+                  </div>
+                </div>
+                <p class="card-text text-muted">Personale gentile e preparato. L'attenzione dedicata ad ogni paziente è davvero apprezzabile. Struttura ben organizzata. Ci tornerò sicuramente per i prossimi controlli.</p>
               </div>
             </div>
           </div>
@@ -126,5 +183,18 @@ const getAssetUrl = (path) => {
 
 .text-accent {
   color: var(--bs-primary);
+}
+
+.review-card {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.review-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.stars i {
+  font-size: 1rem;
 }
 </style>

@@ -235,7 +235,7 @@ const handleRichiediChiamata = async (values) => {
                           <i class="fa-solid fa-eye me-1 me-md-2"></i><span class="d-none d-sm-inline">Vedi Dettagli</span><span class="d-sm-none">Dettagli</span>
                         </button>
                         <button @click="apriModalChiamata(proposta)" class="btn btn-success btn-sm">
-                          <i class="fa-solid fa-phone me-1 me-md-2"></i><span class="d-none d-sm-inline">Richiedi Chiamata</span><span class="d-sm-none">Chiamami</span>
+                          <i class="fa-solid fa-phone me-1 me-md-2"></i><span class="d-none d-sm-inline">Fissa appuntamento</span><span class="d-sm-none">Fissa appuntamento</span>
                         </button>
                       </div>
                     </div>
@@ -372,7 +372,7 @@ const handleRichiediChiamata = async (values) => {
           </div>
           <div class="modal-body p-3 p-md-4">
             <p class="text-muted small mb-3">
-              Lascia i tuoi dati e ti contatteremo al più presto per discutere questa proposta.
+              Lascia i tuoi dati e ti contatteremo al più presto per discutere questa proposta e fissare un appuntamento in Studio.
             </p>
 
             <Form @submit="handleRichiediChiamata" :validation-schema="chiamataSchema" ref="formChiamataRef">

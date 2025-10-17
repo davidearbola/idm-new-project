@@ -571,7 +571,7 @@ onUnmounted(() => {
             <div v-else-if="isRicercaProposte" class="text-center p-3 p-sm-4 p-md-5">
               <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem"></div>
               <h4 class="mt-3 mt-md-4 fs-5 fs-md-4">Stiamo cercando le migliori proposte per te...</h4>
-              <p class="text-muted small mb-0">Ti contatteremo a breve con le offerte degli studi medici della tua zona.</p>
+              <p class="text-muted small mb-0">A breve ti mostreremo le migliori proposte degli studi medici della tua zona.</p>
             </div>
 
             <!-- SUCCESS: PROPOSTE PRONTE -->
@@ -608,7 +608,7 @@ onUnmounted(() => {
                           <i class="fa-solid fa-eye me-1 me-md-2"></i><span class="d-none d-sm-inline">Vedi Dettagli</span><span class="d-sm-none">Dettagli</span>
                         </button>
                         <button @click="apriModalChiamata(proposta)" class="btn btn-success btn-sm">
-                          <i class="fa-solid fa-phone me-1 me-md-2"></i><span class="d-none d-sm-inline">Richiedi Chiamata</span><span class="d-sm-none">Chiamami</span>
+                          <i class="fa-solid fa-phone me-1 me-md-2"></i><span class="d-none d-sm-inline">Fissa appuntamento</span><span class="d-sm-none">Fissa appuntamento</span>
                         </button>
                       </div>
                     </div>
@@ -760,7 +760,7 @@ onUnmounted(() => {
           </div>
           <div class="modal-body p-3 p-md-4">
             <p class="text-muted small mb-3">
-              Lascia i tuoi dati e ti contatteremo al più presto per discutere questa proposta.
+              Lascia i tuoi dati e ti contatteremo al più presto per discutere questa proposta e fissare un appuntamento in Studio.
             </p>
 
             <Form @submit="handleRichiediChiamata" :validation-schema="chiamataSchema" ref="formChiamataRef">

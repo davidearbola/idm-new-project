@@ -127,7 +127,7 @@ class ProcessPreventivo implements ShouldQueue
                                             
                         ### 3. Regole Aggiuntive e Formattazione:
                         -   **Numeri**: Tutti i valori devono essere numeri puri, senza simboli di valuta (€) o separatori delle migliaia (usa `1334.00` e non `1.334,00`). Usa il punto `.` come separatore decimale.
-                        -   **Dati da Ignorare**: Ignora intestazioni, dati del paziente, indirizzi, e qualsiasi testo non pertinente.
+                        -   **Dati da Ignorare**: Ignora intestazioni, dati del paziente, indirizzi, voci chiamate "Estensioni di garanzia" e qualsiasi testo non pertinente.
                                             
                         ## ESEMPIO PRATICO (Basato su un caso reale)
                         Testo: "Prestazione: Ricostruzione dente (27,28), Qtà: 2, Prezzo singolo: 116,00, Prezzo totale: 232,00. [...] In fondo: Corrispettivo con quota associativa 89€: 1.334,00 €"
