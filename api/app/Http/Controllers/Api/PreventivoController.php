@@ -312,6 +312,12 @@ class PreventivoController extends Controller
 
             // Verifica se la chiamata è andata a buon fine
             if ($response->successful()) {
+                $proposta->update(["stato" => "accettata"]);
+                $preventivo->update([
+                    "cellulare_paziente" => $telefono,
+                    "nome_paziente" => $validated['nome'],
+                    "cognome_paziente" => $validated['cognome']
+                ]);
                 return response()->json([
                     'success' => true,
                     'message' => 'Richiesta di chiamata inviata con successo! Ti contatteremo a breve.',

@@ -41,11 +41,22 @@ const linksPaziente = [
 
 const linksMedico = [
   { name: 'Preventivi', path: '/dashboard/preventivi-accettati', icon: 'fa-solid fa-file-invoice-dollar' },
+  { name: 'Disponibilità', path: '/dashboard/disponibilita', icon: 'fa-solid fa-calendar-days' },
+  { name: 'Appuntamenti', path: '/dashboard/appuntamenti-medico', icon: 'fa-solid fa-calendar-check' },
   { name: 'Profilo Studio', path: '/dashboard/profilo', icon: 'fa-solid fa-store' },
   { name: 'Listino', path: '/dashboard/listino', icon: 'fa-solid fa-tags' },
 ];
 
-const menuLinks = computed(() => user.value?.role === 'medico' ? linksMedico : linksPaziente);
+const linksSales = [
+  { name: 'Ricerca Proposte', path: '/dashboard/sales-ricerca', icon: 'fa-solid fa-magnifying-glass' },
+  { name: 'Lista Appuntamenti', path: '/dashboard/sales-appuntamenti', icon: 'fa-solid fa-list-check' },
+];
+
+const menuLinks = computed(() => {
+  if (user.value?.role === 'medico') return linksMedico;
+  if (user.value?.role === 'sales') return linksSales;
+  return linksPaziente;
+});
 
 const handleLogout = async () => {
   if (uiStore.hasUnsavedChanges) {
@@ -127,7 +138,14 @@ const handleLogout = async () => {
             </span>
           </RouterLink>
       </template>
-      
+
+      <template v-if="user?.role === 'sales'">
+         <RouterLink v-for="link in menuLinks" :key="link.path" :to="link.path" class="mobile-nav-item">
+            <i :class="link.icon"></i>
+            <span class="label">{{ link.name }}</span>
+          </RouterLink>
+      </template>
+
       <RouterLink to="/dashboard/impostazioni" class="mobile-nav-item">
         <i class="fa-solid fa-gear"></i>
         <span class="label">Impostazioni</span>

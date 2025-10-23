@@ -133,6 +133,18 @@ const router = createRouter({
           meta: { roles: ['medico'] },
         },
         {
+          path: 'disponibilita',
+          name: 'dashboard-disponibilita',
+          component: () => import('../views/Dashboard/Medico/DisponibilitaView.vue'),
+          meta: { roles: ['medico'] },
+        },
+        {
+          path: 'appuntamenti-medico',
+          name: 'dashboard-appuntamenti-medico',
+          component: () => import('../views/Dashboard/Medico/AppuntamentiMedicoView.vue'),
+          meta: { roles: ['medico'] },
+        },
+        {
           path: 'profilo',
           name: 'dashboard-profilo',
           component: () => import('../views/Dashboard/Medico/ProfiloStudioView.vue'),
@@ -149,6 +161,27 @@ const router = createRouter({
           name: 'reset-password-force',
           component: () => import('../views/Dashboard/Medico/ResetPasswordForceView.vue'),
           meta: { roles: ['medico'] },
+        },
+
+        // Rotte Sales
+        {
+          path: 'sales-ricerca',
+          name: 'sales-ricerca-proposte',
+          component: () => import('../views/Dashboard/Sales/RicercaProposteView.vue'),
+          meta: { roles: ['sales'] },
+        },
+        {
+          path: 'sales-agenda/:medicoId',
+          name: 'sales-agenda-medico',
+          component: () => import('../views/Dashboard/Sales/AgendaMedicoView.vue'),
+          meta: { roles: ['sales'] },
+          props: true,
+        },
+        {
+          path: 'sales-appuntamenti',
+          name: 'sales-lista-appuntamenti',
+          component: () => import('../views/Dashboard/Sales/ListaAppuntamentiView.vue'),
+          meta: { roles: ['sales'] },
         },
       ],
     },

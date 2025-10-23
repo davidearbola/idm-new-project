@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\ProfiloMedicoController;
 use App\Http\Controllers\Api\NotificaController;
 use App\Http\Controllers\Api\PropostaController;
 use App\Http\Controllers\Api\SocialiteController;
+use App\Http\Controllers\Api\DisponibilitaController;
+use App\Http\Controllers\Api\AppuntamentoController;
 use App\Jobs\TestLogJob;
 
 /*
@@ -89,6 +91,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/notifiche', [NotificaController::class, 'index']);
         Route::post('/notifiche-mark-as-read', [NotificaController::class, 'markAsReadNotificheMedico']);
         Route::get('/proposte-accettate', [PropostaController::class, 'getProposteAccettatePerMedico']);
+
+        // Disponibilità Medico
+        Route::prefix('disponibilita')->group(function () {
+            Route::get('/', [DisponibilitaController::class, 'index']);
+            Route::post('/', [DisponibilitaController::class, 'store']);
+            Route::put('/{disponibilita}', [DisponibilitaController::class, 'update']);
+            Route::delete('/{disponibilita}', [DisponibilitaController::class, 'destroy']);
+            Route::post('/rigenera-slots', [DisponibilitaController::class, 'rigeneraSlots']);
+        });
+
+        // Appuntamenti Medico
+        Route::get('/appuntamenti-futuri', [AppuntamentoController::class, 'getAppuntamentiFuturi']);
     });
 
     // --- ROTTE PAZIENTE (Non affette dal middleware medico) ---
@@ -97,6 +111,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/mark-as-read-paziente', [PropostaController::class, 'markProposteAsVisualizzate']);
         Route::post('/{proposta}/accetta', [PropostaController::class, 'accetta']);
         Route::post('/{proposta}/rifiuta', [PropostaController::class, 'rifiuta']);
+    });
+
+    // --- ROTTE SALES ---
+    Route::prefix('sales')->group(function () {
+        Route::post('/cerca-proposte', [AppuntamentoController::class, 'cercaProposte']);
+        Route::get('/agenda-medico/{medicoId}', [AppuntamentoController::class, 'getAgendaMedico']);
+        Route::post('/fissa-appuntamento', [AppuntamentoController::class, 'fissaAppuntamento']);
+    });
+
+    // --- ROTTE APPUNTAMENTI (Sales e Medici) ---
+    Route::prefix('appuntamenti')->group(function () {
+        Route::get('/', [AppuntamentoController::class, 'index']);
+        Route::put('/{appuntamento}/stato', [AppuntamentoController::class, 'updateStato']);
     });
 });
 
