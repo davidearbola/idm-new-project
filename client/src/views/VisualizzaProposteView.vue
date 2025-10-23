@@ -212,7 +212,10 @@ const handleRichiediChiamata = async (values) => {
                   <div class="card h-100 shadow-sm border-0">
                     <div class="card-body p-3 p-md-4">
                       <h5 class="card-title fw-bold text-primary mb-2 mb-md-3 fs-6 fs-md-5">
-                        {{ proposta.medico?.anagrafica_medico?.ragione_sociale || 'Studio Medico' }}
+                        <a :href="`/profilo-medico/${proposta.medico?.id}`" target="_blank" class="text-decoration-none text-primary">
+                          {{ proposta.medico?.anagrafica_medico?.ragione_sociale || 'Studio Medico' }}
+                          <i class="fa-solid fa-external-link-alt fa-xs ms-1"></i>
+                        </a>
                       </h5>
                       <p class="text-muted small mb-2">
                         <i class="fa-solid fa-location-dot me-1 me-md-2"></i>

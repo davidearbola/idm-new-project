@@ -36,6 +36,13 @@ const router = createRouter({
       component: () => import('../views/VisualizzaProposteView.vue'),
       meta: { layout: 'PublicLayout', showHeader: false, showFooter: false },
     },
+    {
+      path: '/profilo-medico/:id',
+      name: 'profilo-medico-pubblico',
+      component: () => import('../views/Dashboard/Public/ProfiloMedicoPublicView.vue'),
+      meta: { layout: 'PublicLayout', showHeader: false, showFooter: false },
+      props: true,
+    },
     // **** ROTTE AUTH ****
     {
       path: '/login',

@@ -26,40 +26,19 @@ class ProfiloMedicoController extends Controller
     }
 
     /**
-     * Ritorna il profilo pubblico di un medico, con controllo di autorizzazione.
+     * Ritorna il profilo pubblico di un medico (accessibile a tutti).
      */
     public function showPublicProfile($medicoId)
     {
-        $user = Auth::user();
         $medico = User::with(['anagraficaMedico', 'fotoStudi', 'staff'])->findOrFail($medicoId);
 
-        // Controllo #1: il medico ha completato tutti gli step del profilo?
+        // Controllo: il medico ha completato tutti gli step del profilo?
         $anagrafica = $medico->anagraficaMedico;
         if (!$anagrafica || !$anagrafica->step_listino_completed_at || !$anagrafica->step_profilo_completed_at || !$anagrafica->step_staff_completed_at) {
             abort(403, 'Il profilo di questo medico non è ancora completo.');
         }
 
-        // Controllo #2: l'utente è il medico stesso?
-        if ($user->id == $medicoId) {
-            return response()->json($medico);
-        }
-
-        // Controllo #3: l'utente è un paziente che ha una proposta da questo medico?
-        if ($user->role === 'paziente') {
-            $hasProposta = $user->anagraficaPaziente
-                ->preventivi()
-                ->whereHas('controproposte', function ($query) use ($medicoId) {
-                    $query->where('medico_user_id', $medicoId);
-                })
-                ->exists();
-
-            if ($hasProposta) {
-                return response()->json($medico);
-            }
-        }
-
-        // Se nessuno dei controlli ha avuto successo, l'accesso è negato.
-        abort(403, 'Non hai il permesso di visualizzare questo profilo.');
+        return response()->json($medico);
     }
 
     /**

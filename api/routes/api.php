@@ -40,6 +40,10 @@ Route::get('/preventivi/{preventivoPaziente}/proposte-stato', [PreventivoControl
 Route::post('/preventivi/recupera-proposte', [PreventivoController::class, 'recuperaProposte']);
 Route::post('/preventivi/richiedi-chiamata', [PreventivoController::class, 'richiediChiamata']);
 
+// --- PROFILO PUBBLICO MEDICO ---
+Route::get('/profilo-pubblico-medico/{medicoId}', [ProfiloMedicoController::class, 'showPublicProfile'])
+    ->where('medicoId', '[0-9]+');
+
 /*
 |--------------------------------------------------------------------------
 | Rotte Protette da Autenticazione (`auth:sanctum`)
@@ -58,10 +62,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/email', [ImpostazioniUtenteController::class, 'updateEmail'])->name('email');
         Route::put('/password', [ImpostazioniUtenteController::class, 'updatePassword'])->name('password');
     });
-
-    // --- NUOVA ROTTA PER PROFILO PUBBLICO ---
-    Route::get('/profilo-pubblico-medico/{medicoId}', [ProfiloMedicoController::class, 'showPublicProfile'])
-        ->where('medicoId', '[0-9]+');
 
     // --- ROTTE PROTETTE DAL CAMBIO PASSWORD OBBLIGATORIO ---
     // Tutte le funzionalità della dashboard del medico vanno qui dentro.
