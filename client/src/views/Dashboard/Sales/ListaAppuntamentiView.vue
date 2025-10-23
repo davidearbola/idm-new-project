@@ -75,9 +75,6 @@
                     <div>
                       {{ app.medico?.anagrafica_medico?.ragione_sociale || 'N/A' }}
                     </div>
-                    <small class="text-muted">
-                      {{ app.medico?.name || '' }}
-                    </small>
                   </td>
                   <td>
                     <div class="small">
