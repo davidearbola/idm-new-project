@@ -41,7 +41,7 @@ const linksPaziente = [
 
 const linksMedico = [
   { name: 'Preventivi', path: '/dashboard/preventivi-accettati', icon: 'fa-solid fa-file-invoice-dollar' },
-  { name: 'Disponibilità', path: '/dashboard/disponibilita', icon: 'fa-solid fa-calendar-days' },
+  { name: 'Poltrone', path: '/dashboard/poltrone', icon: 'fa-solid fa-calendar-days' },
   { name: 'Appuntamenti', path: '/dashboard/appuntamenti-medico', icon: 'fa-solid fa-calendar-check' },
   { name: 'Profilo Studio', path: '/dashboard/profilo', icon: 'fa-solid fa-store' },
   { name: 'Listino', path: '/dashboard/listino', icon: 'fa-solid fa-tags' },

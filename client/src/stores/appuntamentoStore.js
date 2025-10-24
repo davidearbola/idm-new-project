@@ -64,5 +64,29 @@ export const useAppuntamentoStore = defineStore('appuntamento', {
         this.isLoading = false
       }
     },
+
+    async marcaVisualizzato(id) {
+      try {
+        const response = await axios.put(`/api/appuntamenti/${id}/visualizzato`)
+
+        // Aggiorna lo stato locale senza ricaricare tutti gli appuntamenti
+        const appuntamento = this.appuntamenti.find(app => app.id === id)
+        if (appuntamento) {
+          appuntamento.stato = 'visualizzato'
+        }
+
+        return {
+          success: true,
+          message: 'Appuntamento marcato come visualizzato',
+          data: response.data.data
+        }
+      } catch (error) {
+        console.error('Errore nel marcare l\'appuntamento come visualizzato:', error)
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Errore nel marcare l\'appuntamento come visualizzato'
+        }
+      }
+    },
   },
 })

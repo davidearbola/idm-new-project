@@ -13,17 +13,19 @@ return new class extends Migration
     {
         Schema::create('appuntamenti', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('slot_appuntamento_id')->constrained('slot_appuntamenti')->onDelete('cascade');
-            $table->foreignId('medico_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('proposta_id')->constrained('controproposte_medici')->onDelete('cascade');
-            $table->enum('stato', ['confermato', 'completato', 'cancellato'])->default('confermato');
+            $table->foreignId('poltrona_id')->constrained('poltrone_medici')->onDelete('cascade');
+            $table->dateTime('starting_date_time');
+            $table->dateTime('ending_date_time');
+            $table->enum('stato', ['confermato', 'completato', 'assente', 'cancellato'])->default('confermato');
             $table->text('note')->nullable();
             $table->timestamps();
 
             // Indici per query veloci
-            $table->index(['medico_id', 'stato']);
             $table->index('proposta_id');
-            $table->index('slot_appuntamento_id');
+            $table->index('poltrona_id');
+            $table->index(['starting_date_time', 'ending_date_time']);
+            $table->index('stato');
         });
     }
 

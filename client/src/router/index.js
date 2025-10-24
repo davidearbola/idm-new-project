@@ -140,9 +140,9 @@ const router = createRouter({
           meta: { roles: ['medico'] },
         },
         {
-          path: 'disponibilita',
-          name: 'dashboard-disponibilita',
-          component: () => import('../views/Dashboard/Medico/DisponibilitaView.vue'),
+          path: 'poltrone',
+          name: 'dashboard-poltrone',
+          component: () => import('../views/Dashboard/Medico/PoltroneMedicoView.vue'),
           meta: { roles: ['medico'] },
         },
         {

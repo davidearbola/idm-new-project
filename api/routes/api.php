@@ -92,13 +92,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/notifiche-mark-as-read', [NotificaController::class, 'markAsReadNotificheMedico']);
         Route::get('/proposte-accettate', [PropostaController::class, 'getProposteAccettatePerMedico']);
 
+        // Poltrone Medico
+        Route::prefix('poltrone')->group(function () {
+            Route::get('/', [App\Http\Controllers\Api\PoltronaController::class, 'index']);
+            Route::post('/', [App\Http\Controllers\Api\PoltronaController::class, 'store']);
+            Route::put('/{poltrona}', [App\Http\Controllers\Api\PoltronaController::class, 'update']);
+            Route::delete('/{poltrona}', [App\Http\Controllers\Api\PoltronaController::class, 'destroy']);
+        });
+
         // Disponibilità Medico
         Route::prefix('disponibilita')->group(function () {
             Route::get('/', [DisponibilitaController::class, 'index']);
             Route::post('/', [DisponibilitaController::class, 'store']);
             Route::put('/{disponibilita}', [DisponibilitaController::class, 'update']);
             Route::delete('/{disponibilita}', [DisponibilitaController::class, 'destroy']);
-            Route::post('/rigenera-slots', [DisponibilitaController::class, 'rigeneraSlots']);
         });
 
         // Appuntamenti Medico
@@ -124,6 +131,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('appuntamenti')->group(function () {
         Route::get('/', [AppuntamentoController::class, 'index']);
         Route::put('/{appuntamento}/stato', [AppuntamentoController::class, 'updateStato']);
+        Route::put('/{appuntamento}/visualizzato', [AppuntamentoController::class, 'marcaVisualizzato']);
     });
 });
 

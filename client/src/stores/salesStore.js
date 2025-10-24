@@ -5,7 +5,7 @@ export const useSalesStore = defineStore('sales', {
   state: () => ({
     isLoading: false,
     proposte: [],
-    agendaMedico: [],
+    agendaMedico: null, // Struttura: { poltrone: [], periodo: {} }
     propostaSelezionata: null,
   }),
 
@@ -27,11 +27,11 @@ export const useSalesStore = defineStore('sales', {
       }
     },
 
-    async getAgendaMedico(medicoId, dataInizio, dataFine) {
+    async getAgendaMedico(medicoId, dataInizio) {
       this.isLoading = true
       try {
         const response = await axios.get(`/api/sales/agenda-medico/${medicoId}`, {
-          params: { data_inizio: dataInizio, data_fine: dataFine }
+          params: { data_inizio: dataInizio }
         })
         this.agendaMedico = response.data
         return { success: true, data: response.data }
@@ -46,12 +46,14 @@ export const useSalesStore = defineStore('sales', {
       }
     },
 
-    async fissaAppuntamento(slotAppuntamentoId, propostaId, note = null) {
+    async fissaAppuntamento(propostaId, poltronaId, startingDateTime, endingDateTime, note = null) {
       this.isLoading = true
       try {
         const response = await axios.post('/api/sales/fissa-appuntamento', {
-          slot_appuntamento_id: slotAppuntamentoId,
           proposta_id: propostaId,
+          poltrona_id: poltronaId,
+          starting_date_time: startingDateTime,
+          ending_date_time: endingDateTime,
           note
         })
         return {
@@ -63,7 +65,8 @@ export const useSalesStore = defineStore('sales', {
         console.error('Errore nel fissare l\'appuntamento:', error)
         return {
           success: false,
-          message: error.response?.data?.message || 'Errore nel fissare l\'appuntamento'
+          message: error.response?.data?.message || 'Errore nel fissare l\'appuntamento',
+          errors: error.response?.data?.errors
         }
       } finally {
         this.isLoading = false
@@ -76,7 +79,7 @@ export const useSalesStore = defineStore('sales', {
 
     resetPropostaSelezionata() {
       this.propostaSelezionata = null
-      this.agendaMedico = []
+      this.agendaMedico = null
     },
   },
 })

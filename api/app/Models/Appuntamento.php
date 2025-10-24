@@ -13,25 +13,26 @@ class Appuntamento extends Model
     protected $table = 'appuntamenti';
 
     protected $fillable = [
-        'slot_appuntamento_id',
-        'medico_id',
         'proposta_id',
+        'poltrona_id',
+        'starting_date_time',
+        'ending_date_time',
         'stato',
         'note',
     ];
 
-    public function slotAppuntamento(): BelongsTo
-    {
-        return $this->belongsTo(SlotAppuntamento::class);
-    }
-
-    public function medico(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'medico_id');
-    }
+    protected $casts = [
+        'starting_date_time' => 'datetime',
+        'ending_date_time' => 'datetime',
+    ];
 
     public function proposta(): BelongsTo
     {
         return $this->belongsTo(ContropropostaMedico::class, 'proposta_id');
+    }
+
+    public function poltrona(): BelongsTo
+    {
+        return $this->belongsTo(PoltronaMedico::class, 'poltrona_id');
     }
 }

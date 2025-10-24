@@ -4,7 +4,7 @@ import axios from 'axios'
 export const useDisponibilitaStore = defineStore('disponibilita', {
   state: () => ({
     isLoading: false,
-    disponibilita: [],
+    poltrone: [], // Array di poltrone con le loro disponibilità nested
     giorniSettimana: [
       { value: 1, label: 'Lunedì' },
       { value: 2, label: 'Martedì' },
@@ -17,13 +17,17 @@ export const useDisponibilitaStore = defineStore('disponibilita', {
   }),
 
   getters: {
-    disponibilitaPerGiorno: (state) => {
+    // Ritorna le disponibilità raggruppate per poltrona e giorno
+    disponibilitaPerPoltronaEGiorno: (state) => {
       const grouped = {}
-      state.disponibilita.forEach(disp => {
-        if (!grouped[disp.giorno_settimana]) {
-          grouped[disp.giorno_settimana] = []
-        }
-        grouped[disp.giorno_settimana].push(disp)
+      state.poltrone.forEach(poltrona => {
+        grouped[poltrona.id] = {}
+        poltrona.disponibilita.forEach(disp => {
+          if (!grouped[poltrona.id][disp.giorno_settimana]) {
+            grouped[poltrona.id][disp.giorno_settimana] = []
+          }
+          grouped[poltrona.id][disp.giorno_settimana].push(disp)
+        })
       })
       return grouped
     },
@@ -32,6 +36,21 @@ export const useDisponibilitaStore = defineStore('disponibilita', {
       const giorno = state.giorniSettimana.find(g => g.value === numero)
       return giorno ? giorno.label : ''
     },
+
+    // Ritorna tutte le disponibilità piatte (per compatibilità)
+    tutteLeDisponibilita: (state) => {
+      const tutte = []
+      state.poltrone.forEach(poltrona => {
+        poltrona.disponibilita.forEach(disp => {
+          tutte.push({
+            ...disp,
+            poltrona_id: poltrona.id,
+            nome_poltrona: poltrona.nome_poltrona
+          })
+        })
+      })
+      return tutte
+    },
   },
 
   actions: {
@@ -39,7 +58,8 @@ export const useDisponibilitaStore = defineStore('disponibilita', {
       this.isLoading = true
       try {
         const response = await axios.get('/api/disponibilita')
-        this.disponibilita = response.data
+        // La risposta ora contiene le poltrone con le disponibilità nested
+        this.poltrone = response.data
         return { success: true }
       } catch (error) {
         console.error('Errore nel caricamento delle disponibilità:', error)
@@ -110,25 +130,6 @@ export const useDisponibilitaStore = defineStore('disponibilita', {
         return {
           success: false,
           message: error.response?.data?.message || 'Errore nell\'eliminazione della disponibilità'
-        }
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    async rigeneraSlots() {
-      this.isLoading = true
-      try {
-        await axios.post('/api/disponibilita/rigenera-slots')
-        return {
-          success: true,
-          message: 'Slots rigenerati con successo'
-        }
-      } catch (error) {
-        console.error('Errore nella rigenerazione degli slots:', error)
-        return {
-          success: false,
-          message: error.response?.data?.message || 'Errore nella rigenerazione degli slots'
         }
       } finally {
         this.isLoading = false

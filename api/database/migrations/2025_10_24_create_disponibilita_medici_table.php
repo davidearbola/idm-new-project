@@ -13,17 +13,15 @@ return new class extends Migration
     {
         Schema::create('disponibilita_medici', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('medico_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('poltrona_id')->constrained('poltrone_medici')->onDelete('cascade');
+            $table->integer('intervallo_minuti')->default(30)->comment('Intervallo in minuti (fisso a 30)');
             $table->tinyInteger('giorno_settimana')->comment('1=Lunedì, 2=Martedì, ..., 7=Domenica');
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->integer('intervallo_slot')->default(30)->comment('Durata slot in minuti');
-            $table->integer('poltrone_disponibili')->default(1);
-            $table->boolean('is_active')->default(true);
+            $table->time('starting_time');
+            $table->time('ending_time');
             $table->timestamps();
 
             // Indice per query veloci
-            $table->index(['medico_id', 'giorno_settimana', 'is_active']);
+            $table->index(['poltrona_id', 'giorno_settimana'], 'disp_poltrona_giorno_idx');
         });
     }
 

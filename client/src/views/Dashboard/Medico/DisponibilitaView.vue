@@ -3,75 +3,91 @@
     <div class="row mb-4">
       <div class="col">
         <h2>Gestione Disponibilità</h2>
-        <p class="text-muted">Configura i tuoi orari di disponibilità settimanali</p>
+        <p class="text-muted">Configura i tuoi orari di disponibilità settimanali per ogni poltrona</p>
       </div>
       <div class="col-auto">
         <button class="btn btn-primary" @click="mostraModalNuova">
-          <i class="fas fa-plus-circle me-2"></i>Aggiungi Disponibilità
+          <i class="bi bi-plus-circle me-2"></i>Aggiungi Disponibilità
         </button>
       </div>
     </div>
 
-    <div v-if="isLoading" class="text-center py-5">
+    <div v-if="disponibilitaStore.isLoading || poltronaStore.isLoading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Caricamento...</span>
       </div>
     </div>
 
     <div v-else>
-      <div class="card shadow-sm">
+      <div v-if="poltronaStore.poltrone.length === 0" class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        Non hai ancora creato nessuna poltrona.
+        <router-link to="/dashboard/medico/poltrone" class="alert-link">Vai alla gestione poltrone</router-link>
+        per creare la prima poltrona.
+      </div>
+
+      <div v-else class="card shadow-sm">
         <div class="card-body">
-          <div v-if="disponibilita.length === 0" class="text-center py-5">
-            <i class="fas fa-calendar-times display-1 text-muted"></i>
-            <p class="mt-3 text-muted">Nessuna disponibilità configurata</p>
-            <button class="btn btn-primary" @click="mostraModalNuova">
-              Aggiungi la prima disponibilità
-            </button>
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th class="text-center align-middle" style="width: 150px;">Giorno</th>
+                  <th v-for="poltrona in disponibilitaStore.poltrone" :key="poltrona.id" class="text-center align-middle">
+                    <i class="bi bi-hospital me-2"></i>{{ poltrona.nome_poltrona }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="giorno in disponibilitaStore.giorniSettimana" :key="giorno.value">
+                  <td class="fw-bold text-center align-middle bg-light">
+                    {{ giorno.label }}
+                  </td>
+                  <td v-for="poltrona in disponibilitaStore.poltrone" :key="poltrona.id" class="p-2">
+                    <div class="disponibilita-cell">
+                      <!-- Mostra le fasce orarie per questo giorno e questa poltrona -->
+                      <div
+                        v-for="disp in getDisponibilitaPerPoltronaEGiorno(poltrona.id, giorno.value)"
+                        :key="disp.id"
+                        class="badge bg-primary mb-1 me-1 p-2 disponibilita-badge"
+                      >
+                        <span>{{ disp.starting_time.substring(0, 5) }} - {{ disp.ending_time.substring(0, 5) }}</span>
+                        <button
+                          class="btn btn-sm btn-link text-white p-0 ms-2"
+                          @click="modificaDisponibilita(disp, poltrona)"
+                          title="Modifica"
+                        >
+                          <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button
+                          class="btn btn-sm btn-link text-white p-0 ms-1"
+                          @click="confermaEliminazione(disp, poltrona, giorno)"
+                          title="Elimina"
+                        >
+                          <i class="bi bi-trash-fill"></i>
+                        </button>
+                      </div>
+
+                      <!-- Pulsante per aggiungere una nuova fascia -->
+                      <button
+                        class="btn btn-sm btn-outline-primary btn-add-slot mt-1"
+                        @click="aggiungiDisponibilita(poltrona, giorno)"
+                        title="Aggiungi disponibilità"
+                      >
+                        <i class="bi bi-plus-circle"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-          <div v-else>
-            <div v-for="giorno in giorniConDisponibilita" :key="giorno.numero" class="mb-4">
-              <h5 class="border-bottom pb-2">{{ giorno.nome }}</h5>
-              <div class="row g-3">
-                <div v-for="disp in giorno.disponibilita" :key="disp.id" class="col-md-6 col-lg-4">
-                  <div class="card h-100">
-                    <div class="card-body">
-                      <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                          <h6 class="mb-1">
-                            <i class="fas fa-clock me-2"></i>
-                            {{ disp.start_time }} - {{ disp.end_time }}
-                          </h6>
-                          <small class="text-muted">Slot: {{ disp.intervallo_slot }} min</small>
-                        </div>
-                        <span :class="['badge', disp.is_active ? 'bg-success' : 'bg-secondary']">
-                          {{ disp.is_active ? 'Attiva' : 'Disattivata' }}
-                        </span>
-                      </div>
-                      <p class="mb-2">
-                        <i class="fas fa-users me-2"></i>
-                        {{ disp.poltrone_disponibili }}
-                        {{ disp.poltrone_disponibili === 1 ? 'poltrona' : 'poltrone' }}
-                      </p>
-                      <div class="btn-group w-100" role="group">
-                        <button
-                          class="btn btn-sm btn-outline-primary"
-                          @click="modificaDisponibilita(disp)"
-                        >
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button
-                          class="btn btn-sm btn-outline-danger"
-                          @click="confermaEliminazione(disp)"
-                        >
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div class="mt-3">
+            <small class="text-muted">
+              <i class="bi bi-info-circle me-1"></i>
+              Gli slot saranno generati automaticamente con intervalli di <strong>30 minuti</strong> per ogni fascia oraria configurata.
+            </small>
           </div>
         </div>
       </div>
@@ -90,63 +106,41 @@
           <div class="modal-body">
             <form @submit.prevent="salvaDisponibilita">
               <div class="mb-3">
+                <label class="form-label">Poltrona</label>
+                <input
+                  v-model="form.nome_poltrona"
+                  type="text"
+                  class="form-control"
+                  readonly
+                  disabled
+                >
+              </div>
+
+              <div class="mb-3">
                 <label class="form-label">Giorno della Settimana</label>
-                <select v-model="form.giorno_settimana" class="form-select" required>
-                  <option value="">Seleziona un giorno</option>
-                  <option v-for="giorno in giorniSettimana" :key="giorno.value" :value="giorno.value">
-                    {{ giorno.label }}
-                  </option>
-                </select>
+                <input
+                  v-model="form.nome_giorno"
+                  type="text"
+                  class="form-control"
+                  readonly
+                  disabled
+                >
               </div>
 
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label class="form-label">Ora Inizio</label>
-                  <input v-model="form.start_time" type="time" class="form-control" required>
+                  <input v-model="form.starting_time" type="time" class="form-control" required>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Ora Fine</label>
-                  <input v-model="form.end_time" type="time" class="form-control" required>
+                  <input v-model="form.ending_time" type="time" class="form-control" required>
                 </div>
               </div>
 
-              <div class="mb-3">
-                <label class="form-label">Durata Slot (minuti)</label>
-                <select v-model.number="form.intervallo_slot" class="form-select" required>
-                  <option :value="15">15 minuti</option>
-                  <option :value="30">30 minuti</option>
-                  <option :value="45">45 minuti</option>
-                  <option :value="60">60 minuti</option>
-                </select>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Numero Poltrone Disponibili</label>
-                <input 
-                  v-model.number="form.poltrone_disponibili" 
-                  type="number" 
-                  min="1" 
-                  max="10"
-                  class="form-control" 
-                  required
-                >
-                <small class="form-text text-muted">
-                  Numero di pazienti che possono essere visitati contemporaneamente
-                </small>
-              </div>
-
-              <div class="mb-3" v-if="modalMode === 'edit'">
-                <div class="form-check form-switch">
-                  <input 
-                    v-model="form.is_active" 
-                    class="form-check-input" 
-                    type="checkbox" 
-                    id="isActive"
-                  >
-                  <label class="form-check-label" for="isActive">
-                    Disponibilità attiva
-                  </label>
-                </div>
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Gli slot saranno generati automaticamente con intervalli di <strong>30 minuti</strong>
               </div>
 
               <div v-if="formErrors" class="alert alert-danger">
@@ -162,13 +156,13 @@
             <button type="button" class="btn btn-secondary" @click="chiudiModal">
               Annulla
             </button>
-            <button 
-              type="button" 
-              class="btn btn-primary" 
+            <button
+              type="button"
+              class="btn btn-primary"
               @click="salvaDisponibilita"
-              :disabled="isLoading"
+              :disabled="disponibilitaStore.isLoading"
             >
-              <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+              <span v-if="disponibilitaStore.isLoading" class="spinner-border spinner-border-sm me-2"></span>
               {{ modalMode === 'create' ? 'Crea' : 'Aggiorna' }}
             </button>
           </div>
@@ -179,76 +173,80 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { storeToRefs } from 'pinia'
+import { ref, onMounted } from 'vue'
 import { useDisponibilitaStore } from '@/stores/disponibilitaStore'
-import { useToast } from 'vue-toastification'
+import { usePoltronaStore } from '@/stores/poltronaStore'
 import { Modal } from 'bootstrap'
 
 const disponibilitaStore = useDisponibilitaStore()
-const { isLoading, disponibilita, giorniSettimana } = storeToRefs(disponibilitaStore)
-const toast = useToast()
+const poltronaStore = usePoltronaStore()
 
 const modalDisponibilita = ref(null)
 let modalInstance = null
 const modalMode = ref('create')
 const form = ref({
   id: null,
-  giorno_settimana: '',
-  start_time: '',
-  end_time: '',
-  intervallo_slot: 30,
-  poltrone_disponibili: 1,
-  is_active: true,
+  poltrona_id: null,
+  nome_poltrona: '',
+  giorno_settimana: null,
+  nome_giorno: '',
+  starting_time: '',
+  ending_time: '',
 })
 const formErrors = ref(null)
 
-const giorniConDisponibilita = computed(() => {
-  const grouped = {}
-  disponibilita.value.forEach(disp => {
-    if (!grouped[disp.giorno_settimana]) {
-      grouped[disp.giorno_settimana] = {
-        numero: disp.giorno_settimana,
-        nome: disponibilitaStore.getNomeGiorno(disp.giorno_settimana),
-        disponibilita: []
-      }
-    }
-    grouped[disp.giorno_settimana].disponibilita.push(disp)
-  })
-  
-  return Object.values(grouped).sort((a, b) => a.numero - b.numero)
-})
-
 onMounted(async () => {
   modalInstance = new Modal(modalDisponibilita.value)
-  await disponibilitaStore.fetchDisponibilita()
+  await Promise.all([
+    disponibilitaStore.fetchDisponibilita(),
+    poltronaStore.fetchPoltrone()
+  ])
 })
 
-function mostraModalNuova() {
+function getDisponibilitaPerPoltronaEGiorno(poltronaId, giornoSettimana) {
+  const poltrona = disponibilitaStore.poltrone.find(p => p.id === poltronaId)
+  if (!poltrona || !poltrona.disponibilita) return []
+
+  return poltrona.disponibilita
+    .filter(disp => disp.giorno_settimana === giornoSettimana)
+    .sort((a, b) => a.starting_time.localeCompare(b.starting_time))
+}
+
+function aggiungiDisponibilita(poltrona, giorno) {
   modalMode.value = 'create'
   form.value = {
     id: null,
-    giorno_settimana: '',
-    start_time: '',
-    end_time: '',
-    intervallo_slot: 30,
-    poltrone_disponibili: 1,
-    is_active: true,
+    poltrona_id: poltrona.id,
+    nome_poltrona: poltrona.nome_poltrona,
+    giorno_settimana: giorno.value,
+    nome_giorno: giorno.label,
+    starting_time: '08:00',
+    ending_time: '12:00',
   }
   formErrors.value = null
   modalInstance.show()
 }
 
-function modificaDisponibilita(disp) {
+function mostraModalNuova() {
+  // Se c'è solo una poltrona, preselezionala
+  if (disponibilitaStore.poltrone.length === 1) {
+    aggiungiDisponibilita(disponibilitaStore.poltrone[0], disponibilitaStore.giorniSettimana[0])
+  } else {
+    alert('Seleziona una cella nella tabella per aggiungere una disponibilità')
+  }
+}
+
+function modificaDisponibilita(disp, poltrona) {
   modalMode.value = 'edit'
+  const giorno = disponibilitaStore.giorniSettimana.find(g => g.value === disp.giorno_settimana)
   form.value = {
     id: disp.id,
+    poltrona_id: poltrona.id,
+    nome_poltrona: poltrona.nome_poltrona,
     giorno_settimana: disp.giorno_settimana,
-    start_time: disp.start_time,
-    end_time: disp.end_time,
-    intervallo_slot: disp.intervallo_slot,
-    poltrone_disponibili: disp.poltrone_disponibili,
-    is_active: disp.is_active,
+    nome_giorno: giorno ? giorno.label : '',
+    starting_time: disp.starting_time.substring(0, 5),
+    ending_time: disp.ending_time.substring(0, 5),
   }
   formErrors.value = null
   modalInstance.show()
@@ -256,14 +254,12 @@ function modificaDisponibilita(disp) {
 
 async function salvaDisponibilita() {
   formErrors.value = null
-  
+
   const data = {
+    poltrona_id: form.value.poltrona_id,
     giorno_settimana: form.value.giorno_settimana,
-    start_time: form.value.start_time,
-    end_time: form.value.end_time,
-    intervallo_slot: form.value.intervallo_slot,
-    poltrone_disponibili: form.value.poltrone_disponibili,
-    is_active: form.value.is_active,
+    starting_time: form.value.starting_time,
+    ending_time: form.value.ending_time,
   }
 
   let result
@@ -274,24 +270,24 @@ async function salvaDisponibilita() {
   }
 
   if (result.success) {
-    toast.success(result.message)
+    alert(result.message)
     chiudiModal()
   } else {
     if (result.errors) {
       formErrors.value = result.errors
     } else {
-      toast.error(result.message)
+      alert(result.message)
     }
   }
 }
 
-async function confermaEliminazione(disp) {
-  if (confirm(`Sei sicuro di voler eliminare questa disponibilità del ${disponibilitaStore.getNomeGiorno(disp.giorno_settimana)}?`)) {
+async function confermaEliminazione(disp, poltrona, giorno) {
+  if (confirm(`Sei sicuro di voler eliminare la disponibilità del ${giorno.label} dalle ${disp.starting_time.substring(0, 5)} alle ${disp.ending_time.substring(0, 5)} per ${poltrona.nome_poltrona}?`)) {
     const result = await disponibilitaStore.eliminaDisponibilita(disp.id)
     if (result.success) {
-      toast.success(result.message)
+      alert(result.message)
     } else {
-      toast.error(result.message)
+      alert(result.message)
     }
   }
 }
@@ -302,11 +298,44 @@ function chiudiModal() {
 </script>
 
 <style scoped>
-.card {
-  transition: transform 0.2s;
+.disponibilita-cell {
+  min-height: 50px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px;
 }
 
-.card:hover {
-  transform: translateY(-2px);
+.disponibilita-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.disponibilita-badge button {
+  font-size: 0.75rem;
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.disponibilita-badge button:hover {
+  opacity: 1;
+  text-decoration: none;
+}
+
+.btn-add-slot {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.table td {
+  vertical-align: top;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
 }
 </style>

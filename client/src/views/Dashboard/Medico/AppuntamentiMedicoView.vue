@@ -2,8 +2,41 @@
   <div class="container-fluid py-4">
     <div class="row mb-4">
       <div class="col">
-        <h2>Appuntamenti Futuri</h2>
-        <p class="text-muted">I tuoi prossimi appuntamenti confermati</p>
+        <h2>I miei Appuntamenti</h2>
+        <p class="text-muted">Gestisci tutti i tuoi appuntamenti</p>
+      </div>
+    </div>
+
+    <!-- Filtri -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Filtra per Stato</label>
+            <select v-model="filtroStato" class="form-select" @change="applicaFiltri">
+              <option value="">Tutti gli stati</option>
+              <option value="nuovo">Nuovi</option>
+              <option value="visualizzato">Visualizzati</option>
+              <option value="assente">Assente</option>
+              <option value="cancellato">Cancellati</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Cerca Paziente (Email o Cellulare)</label>
+            <input
+              v-model="cercaPaziente"
+              type="text"
+              class="form-control"
+              placeholder="Inserisci email o cellulare..."
+              @input="applicaFiltri"
+            >
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-outline-secondary w-100" @click="resetFiltri">
+              <i class="fas fa-redo me-2"></i>Reset Filtri
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -16,15 +49,16 @@
     <div v-else>
       <div class="card shadow-sm">
         <div class="card-body">
-          <div v-if="appuntamentiFuturi.length === 0" class="text-center py-5">
+          <div v-if="appuntamentiFiltrati.length === 0" class="text-center py-5">
             <i class="fas fa-calendar-check display-1 text-muted"></i>
-            <p class="mt-3 text-muted">Nessun appuntamento futuro</p>
+            <p class="mt-3 text-muted">Nessun appuntamento trovato</p>
           </div>
 
           <div v-else class="table-responsive">
             <table class="table table-hover align-middle">
               <thead>
                 <tr>
+                  <th>ID</th>
                   <th>Data e Ora</th>
                   <th>Paziente</th>
                   <th>Contatto</th>
@@ -34,14 +68,17 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="app in appuntamentiFuturi" :key="app.id">
+                <tr v-for="app in appuntamentiFiltrati" :key="app.id">
+                  <td>
+                    <span class="badge bg-secondary">#{{ app.id }}</span>
+                  </td>
                   <td>
                     <div class="fw-bold">
-                      {{ formatDate(app.slot_appuntamento.start_time) }}
+                      {{ formatDate(app.starting_date_time) }}
                     </div>
                     <small class="text-muted">
-                      {{ formatTime(app.slot_appuntamento.start_time) }} -
-                      {{ formatTime(app.slot_appuntamento.end_time) }}
+                      {{ formatTime(app.starting_date_time) }} -
+                      {{ formatTime(app.ending_date_time) }}
                     </small>
                   </td>
                   <td>
@@ -70,15 +107,15 @@
                   <td>
                     <div class="btn-group" role="group">
                       <button
-                        v-if="app.stato === 'confermato'"
-                        class="btn btn-sm btn-success"
-                        @click="cambiaStato(app, 'completato')"
-                        title="Segna come completato"
+                        v-if="['nuovo', 'visualizzato'].includes(app.stato)"
+                        class="btn btn-sm btn-warning"
+                        @click="cambiaStato(app, 'assente')"
+                        title="Segna come assente"
                       >
-                        <i class="fas fa-check-circle"></i>
+                        <i class="fas fa-user-times"></i>
                       </button>
                       <button
-                        v-if="app.stato === 'confermato'"
+                        v-if="['nuovo', 'visualizzato'].includes(app.stato)"
                         class="btn btn-sm btn-danger"
                         @click="cambiaStato(app, 'cancellato')"
                         title="Cancella"
@@ -115,9 +152,9 @@
               <div class="col-md-6">
                 <h6>Data e Ora</h6>
                 <p>
-                  {{ formatDate(appuntamentoSelezionato.slot_appuntamento.start_time) }}<br>
-                  {{ formatTime(appuntamentoSelezionato.slot_appuntamento.start_time) }} - 
-                  {{ formatTime(appuntamentoSelezionato.slot_appuntamento.end_time) }}
+                  {{ formatDate(appuntamentoSelezionato.starting_date_time) }}<br>
+                  {{ formatTime(appuntamentoSelezionato.starting_date_time) }} -
+                  {{ formatTime(appuntamentoSelezionato.ending_date_time) }}
                 </p>
               </div>
               <div class="col-md-6">
@@ -192,31 +229,68 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAppuntamentoStore } from '@/stores/appuntamentoStore'
 import { useToast } from 'vue-toastification'
 import { Modal } from 'bootstrap'
 
 const appuntamentoStore = useAppuntamentoStore()
-const { isLoading, appuntamentiFuturi } = storeToRefs(appuntamentoStore)
+const { isLoading, appuntamenti } = storeToRefs(appuntamentoStore)
 const toast = useToast()
 
 const modalDettagli = ref(null)
 let modalInstance = null
 const appuntamentoSelezionato = ref(null)
 
+const filtroStato = ref('')
+const cercaPaziente = ref('')
+
+const appuntamentiFiltrati = computed(() => {
+  let risultato = [...appuntamenti.value]
+
+  // Filtro per stato
+  if (filtroStato.value) {
+    risultato = risultato.filter(app => app.stato === filtroStato.value)
+  }
+
+  // Filtro per paziente (email o cellulare)
+  if (cercaPaziente.value) {
+    const search = cercaPaziente.value.toLowerCase()
+    risultato = risultato.filter(app => {
+      const email = app.proposta?.preventivo_paziente?.email_paziente?.toLowerCase() || ''
+      const cellulare = app.proposta?.preventivo_paziente?.cellulare_paziente?.toLowerCase() || ''
+      return email.includes(search) || cellulare.includes(search)
+    })
+  }
+
+  return risultato
+})
+
 onMounted(async () => {
   modalInstance = new Modal(modalDettagli.value)
-  await appuntamentoStore.fetchAppuntamentiFuturi()
+  await caricaAppuntamenti()
 })
+
+async function caricaAppuntamenti() {
+  await appuntamentoStore.fetchAppuntamenti()
+}
+
+function applicaFiltri() {
+  // I filtri sono reattivi, non serve fare nulla
+}
+
+function resetFiltri() {
+  filtroStato.value = ''
+  cercaPaziente.value = ''
+}
 
 function formatDate(dateString) {
   const date = new Date(dateString)
   return date.toLocaleDateString('it-IT', {
-    weekday: 'long',
+    weekday: 'short',
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric'
   })
 }
@@ -231,8 +305,9 @@ function formatTime(dateString) {
 
 function getStatoLabel(stato) {
   const labels = {
-    confermato: 'Confermato',
-    completato: 'Completato',
+    nuovo: 'Nuovo',
+    visualizzato: 'Visualizzato',
+    assente: 'Assente',
     cancellato: 'Cancellato'
   }
   return labels[stato] || stato
@@ -240,33 +315,43 @@ function getStatoLabel(stato) {
 
 function getStatoBadgeClass(stato) {
   const classes = {
-    confermato: 'badge bg-primary',
-    completato: 'badge bg-success',
+    nuovo: 'badge bg-info',
+    visualizzato: 'badge bg-primary',
+    assente: 'badge bg-warning',
     cancellato: 'badge bg-danger'
   }
   return classes[stato] || 'badge bg-secondary'
 }
 
 async function cambiaStato(appuntamento, nuovoStato) {
-  const conferma = nuovoStato === 'cancellato' 
-    ? confirm('Sei sicuro di voler cancellare questo appuntamento?')
-    : confirm('Sei sicuro di voler segnare questo appuntamento come completato?')
+  let messaggio = ''
+  if (nuovoStato === 'cancellato') {
+    messaggio = 'Sei sicuro di voler cancellare questo appuntamento?'
+  } else if (nuovoStato === 'assente') {
+    messaggio = 'Sei sicuro di voler segnare il paziente come assente?'
+  }
 
+  const conferma = confirm(messaggio)
   if (!conferma) return
 
   const result = await appuntamentoStore.aggiornaStatoAppuntamento(appuntamento.id, nuovoStato)
-  
+
   if (result.success) {
     toast.success(result.message)
-    await appuntamentoStore.fetchAppuntamentiFuturi()
+    await caricaAppuntamenti()
   } else {
     toast.error(result.message)
   }
 }
 
-function mostraDettagli(appuntamento) {
+async function mostraDettagli(appuntamento) {
   appuntamentoSelezionato.value = appuntamento
   modalInstance.show()
+
+  // Marca come visualizzato se è nello stato 'nuovo'
+  if (appuntamento.stato === 'nuovo') {
+    await appuntamentoStore.marcaVisualizzato(appuntamento.id)
+  }
 }
 
 function chiudiModal() {
@@ -280,7 +365,6 @@ function getVociProposta(appuntamento) {
   const jsonProposta = appuntamento.proposta.json_proposta
   const voci = []
 
-  // Estrai le voci dal json_proposta
   if (jsonProposta.voci_proposta && Array.isArray(jsonProposta.voci_proposta)) {
     voci.push(...jsonProposta.voci_proposta.map(v => ({
       nome: v.prestazione_corrispondente || v.prestazione_originale || 'Voce',
@@ -296,12 +380,10 @@ function getVociProposta(appuntamento) {
 function getTotale(appuntamento) {
   if (!appuntamento?.proposta?.json_proposta) return 0
 
-  // Usa il totale già calcolato dal backend se disponibile
   if (appuntamento.proposta.json_proposta.totale_proposta) {
     return parseFloat(appuntamento.proposta.json_proposta.totale_proposta)
   }
 
-  // Altrimenti calcola dalla somma delle voci
   const voci = getVociProposta(appuntamento)
   return voci.reduce((sum, voce) => sum + voce.totale, 0)
 }
@@ -318,11 +400,5 @@ function formatCurrency(value) {
 .table th {
   background-color: #f8f9fa;
   font-weight: 600;
-}
-
-pre {
-  font-size: 0.875rem;
-  max-height: 300px;
-  overflow-y: auto;
 }
 </style>
