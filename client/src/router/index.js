@@ -57,18 +57,19 @@ const router = createRouter({
     //   component: () => import('@/views/Auth/SocialCallbackView.vue'),
     //   meta: { layout: 'AuthLayout', requiresGuest: true },
     // },
-    {
-      path: '/register',
-      name: 'register',
-      component: () => import('../views/Auth/RegisterView.vue'),
-      meta: { layout: 'AuthLayout', requiresGuest: true },
-    },
-    {
-      path: '/register-medico',
-      name: 'register-medico',
-      component: () => import('../views/Auth/RegisterMedicoView.vue'),
-      meta: { layout: 'AuthLayout', requiresGuest: true },
-    },
+    // REGISTRAZIONI TEMPORANEAMENTE DISABILITATE
+    // {
+    //   path: '/register',
+    //   name: 'register',
+    //   component: () => import('../views/Auth/RegisterView.vue'),
+    //   meta: { layout: 'AuthLayout', requiresGuest: true },
+    // },
+    // {
+    //   path: '/register-medico',
+    //   name: 'register-medico',
+    //   component: () => import('../views/Auth/RegisterMedicoView.vue'),
+    //   meta: { layout: 'AuthLayout', requiresGuest: true },
+    // },
     {
       path: '/forgot-password',
       name: 'forgot-password',
@@ -192,6 +193,13 @@ const router = createRouter({
           meta: { roles: ['sales'] },
         },
       ],
+    },
+    // **** ROTTA 404 - CATCH ALL ****
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('../views/NotFound404View.vue'),
+      meta: { layout: 'PublicLayout', showHeader: false, showFooter: false },
     },
   ],
   scrollBehavior(to, from, savedPosition) {

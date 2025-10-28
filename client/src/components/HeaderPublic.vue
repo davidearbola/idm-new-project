@@ -98,15 +98,17 @@ watch(() => route.path, () => {
             <RouterLink class="nav-link" to="/come-funziona">Come Funziona</RouterLink>
           </li>
           <template v-if="!user">
-            <li class="nav-item">
+            <!-- REGISTRAZIONI TEMPORANEAMENTE DISABILITATE -->
+            <!-- <li class="nav-item">
               <RouterLink class="nav-link" to="/register-medico">Sei un dentista?</RouterLink>
-            </li>
+            </li> -->
             <li class="nav-item ms-lg-2">
               <RouterLink to="/login" class="btn btn-primary btn-sm">Accedi</RouterLink>
             </li>
-            <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
+            <!-- REGISTRAZIONI TEMPORANEAMENTE DISABILITATE -->
+            <!-- <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
               <RouterLink to="/register" class="btn btn-accent btn-sm">Registrati</RouterLink>
-            </li>
+            </li> -->
           </template>
           <template v-else>
             <li class="nav-item ms-lg-2">

@@ -151,7 +151,9 @@ const howItWorksSteps = [
               aumenta il numero di pazienti senza sforzo. Concentrati sul tuo lavoro, alla
               burocrazia pensiamo noi.
             </p>
-            <RouterLink to="/register-medico" class="btn btn-primary btn-lg">Registra il Tuo Studio</RouterLink>
+            <!-- REGISTRAZIONI TEMPORANEAMENTE DISABILITATE -->
+            <!-- <RouterLink to="/register-medico" class="btn btn-primary btn-lg">Registra il Tuo Studio</RouterLink> -->
+            <p class="text-muted fst-italic">Le registrazioni sono momentaneamente sospese. Contattaci per maggiori informazioni.</p>
           </div>
         </div>
       </div>

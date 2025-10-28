@@ -94,11 +94,14 @@ const handleLogin = async (values, { resetForm }) => {
           <span v-if="isLoading" class="spinner-border spinner-border-sm"></span>
           <span v-else>Accedi</span>
         </button>
+        <!-- REGISTRAZIONI TEMPORANEAMENTE DISABILITATE -->
+        <!--
         <div class="text-center mt-3">
           <p class="text-muted">
             Non hai un account? <RouterLink to="/register">Registrati</RouterLink>
           </p>
         </div>
+        -->
       </Form>
       <!-- GOOGLE LOGIN TEMPORANEAMENTE DISABILITATO -->
       <!--

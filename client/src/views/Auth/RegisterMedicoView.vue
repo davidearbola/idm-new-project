@@ -187,7 +187,8 @@ const handleRegister = async () => {
       </div>
 
        <div class="text-center mt-4">
-            <p class="text-muted small">Sei un paziente? <RouterLink to="/register">Registrati qui</RouterLink></p>
+            <!-- REGISTRAZIONI TEMPORANEAMENTE DISABILITATE -->
+            <!-- <p class="text-muted small">Sei un paziente? <RouterLink to="/register">Registrati qui</RouterLink></p> -->
             <p class="text-muted small">Hai già un account? <RouterLink to="/login">Accedi</RouterLink></p>
         </div>
     </div>

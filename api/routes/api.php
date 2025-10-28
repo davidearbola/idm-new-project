@@ -23,9 +23,10 @@ use App\Jobs\TestLogJob;
 |--------------------------------------------------------------------------
 */
 
-Route::post('/register', [AuthController::class, 'register']);
+// REGISTRAZIONI TEMPORANEAMENTE DISABILITATE
+// Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register-medico', [AuthController::class, 'registerMedico']);
+// Route::post('/register-medico', [AuthController::class, 'registerMedico']);
 
 // --- ROTTE GEOGRAFICHE ---
 Route::get('/province', [GeoController::class, 'getProvince']);
