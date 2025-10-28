@@ -170,6 +170,63 @@ class PreventivoController extends Controller
         $lat = 45.4642000;
         $lng = 9.1900000;
 
+        /* GEOCODING CON GOOGLE MAPS API - DA ATTIVARE IN FUTURO
+        // Costruisci l'indirizzo completo per la geocodifica
+        $indirizzoCompleto = trim(implode(', ', [
+            $validated['indirizzo'],
+            $validated['citta'],
+            $validated['provincia'],
+            $validated['cap'],
+            'Italia'
+        ]));
+
+        try {
+            // Chiama l'API di Google Maps Geocoding
+            $googleMapsApiKey = env('GOOGLE_MAPS_API_KEY');
+
+            $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+                'address' => $indirizzoCompleto,
+                'key' => $googleMapsApiKey,
+                'region' => 'it', // Privilegia risultati italiani
+                'language' => 'it', // Risposta in italiano
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                // Verifica se Google ha trovato dei risultati
+                if ($data['status'] === 'OK' && !empty($data['results'])) {
+                    $location = $data['results'][0]['geometry']['location'];
+                    $lat = $location['lat'];
+                    $lng = $location['lng'];
+
+                    Log::info('Geocoding completato con successo', [
+                        'indirizzo' => $indirizzoCompleto,
+                        'lat' => $lat,
+                        'lng' => $lng,
+                    ]);
+                } else {
+                    // Se Google non trova risultati, manteniamo le coordinate di default
+                    Log::warning('Geocoding non ha prodotto risultati', [
+                        'indirizzo' => $indirizzoCompleto,
+                        'status' => $data['status'],
+                    ]);
+                }
+            } else {
+                Log::error('Errore nella chiamata API Google Maps Geocoding', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+            }
+        } catch (\Exception $e) {
+            // In caso di errore, manteniamo le coordinate di default
+            Log::error('Eccezione durante il geocoding', [
+                'error' => $e->getMessage(),
+                'indirizzo' => $indirizzoCompleto,
+            ]);
+        }
+        */
+
         // Salva i dati del paziente
         $preventivoPaziente->update([
             'email_paziente' => $validated['email'],
