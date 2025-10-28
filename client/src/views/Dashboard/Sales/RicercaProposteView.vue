@@ -52,80 +52,87 @@
           </div>
         </div>
 
-        <div v-else>
-          <div class="row g-3">
-            <div v-for="proposta in proposte" :key="proposta.id" class="col-md-6 col-lg-4">
-              <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h5 class="card-title mb-0">Proposta #{{ proposta.id }}</h5>
-                    <span class="badge bg-success">Accettata</span>
-                  </div>
-
-                  <div class="mb-3">
-                    <h6 class="text-muted mb-2">
-                      <i class="fas fa-user me-2"></i>Paziente
-                    </h6>
-                    <p class="mb-1">
+        <div v-else class="card shadow-sm">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>ID</th>
+                    <th>Stato</th>
+                    <th>Paziente</th>
+                    <th>Contatti</th>
+                    <th>Medico</th>
+                    <th>Indirizzo</th>
+                    <th class="text-end">Totale</th>
+                    <th>Data Accettazione</th>
+                    <th class="text-center">Azioni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="proposta in proposte" :key="proposta.id">
+                    <td>
+                      <strong>#{{ proposta.id }}</strong>
+                    </td>
+                    <td>
+                      <span class="badge bg-success">Accettata</span>
+                    </td>
+                    <td>
                       <strong>{{ proposta.preventivo_paziente?.nome_paziente }} {{ proposta.preventivo_paziente?.cognome_paziente || 'N/A' }}</strong>
-                    </p>
-                    <p class="mb-1 small">
-                      <i class="fas fa-envelope me-1"></i>
-                      {{ proposta.preventivo_paziente?.email_paziente || 'N/A' }}
-                    </p>
-                    <p class="mb-0 small" v-if="proposta.preventivo_paziente?.cellulare_paziente">
-                      <i class="fas fa-phone me-1"></i>
-                      {{ proposta.preventivo_paziente.cellulare_paziente }}
-                    </p>
-                  </div>
-
-                  <div class="mb-3">
-                    <h6 class="text-muted mb-2">
-                      <i class="fas fa-hospital me-2"></i>Medico
-                    </h6>
-                    <p class="mb-1">
+                    </td>
+                    <td>
+                      <div class="small">
+                        <div class="mb-1">
+                          <i class="fas fa-envelope me-1 text-muted"></i>
+                          {{ proposta.preventivo_paziente?.email_paziente || 'N/A' }}
+                        </div>
+                        <div v-if="proposta.preventivo_paziente?.cellulare_paziente">
+                          <i class="fas fa-phone me-1 text-muted"></i>
+                          {{ proposta.preventivo_paziente.cellulare_paziente }}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
                       <strong>{{ proposta.medico?.anagrafica_medico?.ragione_sociale || 'N/A' }}</strong>
-                    </p>
-                    <p class="mb-0 small" v-if="proposta.medico?.anagrafica_medico?.indirizzo">
-                      <i class="fas fa-map-marker-alt me-1"></i>
-                      {{ proposta.medico.anagrafica_medico.indirizzo }}
-                    </p>
-                  </div>
-
-                  <div class="mb-3">
-                    <h6 class="text-muted mb-2">
-                      <i class="fas fa-euro-sign me-2"></i>Totale Proposta
-                    </h6>
-                    <h4 class="text-primary mb-0">
-                      € {{ formatPrice(proposta.json_proposta?.totale_proposta || 0) }}
-                    </h4>
-                  </div>
-
-                  <div class="mb-3">
-                    <small class="text-muted">
-                      <i class="fas fa-calendar me-1"></i>
-                      Accettata il {{ formatDate(proposta.updated_at) }}
-                    </small>
-                  </div>
-
-                  <div class="d-grid gap-2">
-                    <button
-                      class="btn btn-outline-primary"
-                      @click="mostraDettagli(proposta)"
-                    >
-                      <i class="fas fa-file-invoice me-2"></i>
-                      Dettagli Confronto
-                    </button>
-                    <button
-                      class="btn btn-primary"
-                      @click="fissaAppuntamento(proposta)"
-                    >
-                      <i class="fas fa-calendar-check me-2"></i>
-                      Fissa Appuntamento
-                    </button>
-                  </div>
-                </div>
-              </div>
+                    </td>
+                    <td>
+                      <span class="small" v-if="proposta.medico?.anagrafica_medico?.indirizzo">
+                        <i class="fas fa-map-marker-alt me-1 text-muted"></i>
+                        {{ proposta.medico.anagrafica_medico.indirizzo }}
+                      </span>
+                      <span v-else class="text-muted">N/A</span>
+                    </td>
+                    <td class="text-end">
+                      <strong class="text-primary">
+                        € {{ formatPrice(proposta.json_proposta?.totale_proposta || 0) }}
+                      </strong>
+                    </td>
+                    <td>
+                      <span class="small text-muted">
+                        {{ formatDate(proposta.updated_at) }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <div class="btn-group btn-group-sm" role="group">
+                        <button
+                          class="btn btn-outline-primary"
+                          @click="mostraDettagli(proposta)"
+                          title="Dettagli Confronto"
+                        >
+                          <i class="fas fa-file-invoice"></i>
+                        </button>
+                        <button
+                          class="btn btn-primary"
+                          @click="fissaAppuntamento(proposta)"
+                          title="Fissa Appuntamento"
+                        >
+                          <i class="fas fa-calendar-check"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
