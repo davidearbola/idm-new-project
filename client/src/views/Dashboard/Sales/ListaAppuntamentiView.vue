@@ -79,7 +79,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="app in appuntamentiFiltrati" :key="app.id">
+                <tr v-for="app in appuntamentiPaginati" :key="app.id">
                   <td>
                     <span class="badge bg-secondary">#{{ app.id }}</span>
                   </td>
@@ -150,6 +150,37 @@
                 </tr>
               </tbody>
             </table>
+
+            <!-- Paginazione -->
+            <div v-if="totalePagine > 1" class="d-flex justify-content-between align-items-center mt-4">
+              <div class="text-muted">
+                Pagina {{ paginaCorrente }} di {{ totalePagine }} ({{ appuntamentiFiltrati.length }} appuntamenti totali)
+              </div>
+              <nav>
+                <ul class="pagination mb-0">
+                  <li class="page-item" :class="{ disabled: paginaCorrente === 1 }">
+                    <button class="page-link" @click="paginaPrecedente" :disabled="paginaCorrente === 1">
+                      <i class="fas fa-chevron-left"></i>
+                    </button>
+                  </li>
+                  <li
+                    v-for="pagina in totalePagine"
+                    :key="pagina"
+                    class="page-item"
+                    :class="{ active: paginaCorrente === pagina }"
+                  >
+                    <button class="page-link" @click="vaiAPagina(pagina)">
+                      {{ pagina }}
+                    </button>
+                  </li>
+                  <li class="page-item" :class="{ disabled: paginaCorrente === totalePagine }">
+                    <button class="page-link" @click="paginaSuccessiva" :disabled="paginaCorrente === totalePagine">
+                      <i class="fas fa-chevron-right"></i>
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
           </div>
         </div>
       </div>
@@ -288,6 +319,10 @@ const modalDettagli = ref(null)
 let modalInstance = null
 const appuntamentoSelezionato = ref(null)
 
+// Paginazione
+const paginaCorrente = ref(1)
+const elementiPerPagina = 5
+
 const appuntamentiFiltrati = computed(() => {
   let risultato = [...appuntamenti.value]
 
@@ -318,6 +353,34 @@ const appuntamentiFiltrati = computed(() => {
   return risultato
 })
 
+const totalePagine = computed(() => {
+  return Math.ceil(appuntamentiFiltrati.value.length / elementiPerPagina)
+})
+
+const appuntamentiPaginati = computed(() => {
+  const start = (paginaCorrente.value - 1) * elementiPerPagina
+  const end = start + elementiPerPagina
+  return appuntamentiFiltrati.value.slice(start, end)
+})
+
+function vaiAPagina(pagina) {
+  if (pagina >= 1 && pagina <= totalePagine.value) {
+    paginaCorrente.value = pagina
+  }
+}
+
+function paginaPrecedente() {
+  if (paginaCorrente.value > 1) {
+    paginaCorrente.value--
+  }
+}
+
+function paginaSuccessiva() {
+  if (paginaCorrente.value < totalePagine.value) {
+    paginaCorrente.value++
+  }
+}
+
 onMounted(async () => {
   modalInstance = new Modal(modalDettagli.value)
   await caricaAppuntamenti()
@@ -335,6 +398,7 @@ function resetFiltri() {
   filtroStato.value = ''
   filtroMedico.value = ''
   cercaPaziente.value = ''
+  paginaCorrente.value = 1
 }
 
 function formatDate(dateString) {
