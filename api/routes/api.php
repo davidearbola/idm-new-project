@@ -162,12 +162,12 @@ Route::post('/private/register-medico', [AuthController::class, 'registerFromViv
 
 /*
 |--------------------------------------------------------------------------
-| Rotte per Socialite
+| Rotte per Socialite - TEMPORANEAMENTE DISABILITATE
 |--------------------------------------------------------------------------
 */
 
-Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'authProviderRedirect']);
-Route::get('/auth/{provider}/callback', [SocialiteController::class, 'socialAuthentication']);
+// Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'authProviderRedirect']);
+// Route::get('/auth/{provider}/callback', [SocialiteController::class, 'socialAuthentication']);
 
 Route::get('/test-job', function () {
     // Mette in coda il nostro job di test.

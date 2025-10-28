@@ -38,7 +38,8 @@ const handleLogin = async (values, { resetForm }) => {
     })
   }
 }
-const googleAuthUrl = `${import.meta.env.VITE_API_URL}/api/auth/google/redirect`;
+// GOOGLE LOGIN TEMPORANEAMENTE DISABILITATO
+// const googleAuthUrl = `${import.meta.env.VITE_API_URL}/api/auth/google/redirect`;
 </script>
 
 <template>
@@ -99,6 +100,8 @@ const googleAuthUrl = `${import.meta.env.VITE_API_URL}/api/auth/google/redirect`
           </p>
         </div>
       </Form>
+      <!-- GOOGLE LOGIN TEMPORANEAMENTE DISABILITATO -->
+      <!--
       <div class="my-4">
         <p class="text-center fw-bold mx-3 mb-0">Oppure</p>
       </div>
@@ -107,6 +110,7 @@ const googleAuthUrl = `${import.meta.env.VITE_API_URL}/api/auth/google/redirect`
           <i class="fa-brands fa-google me-2"></i> Accedi con Google
         </a>
       </div>
+      -->
 
     </div>
   </div>

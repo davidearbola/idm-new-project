@@ -50,12 +50,13 @@ const router = createRouter({
       component: () => import('../views/Auth/LoginView.vue'),
       meta: { layout: 'AuthLayout', requiresGuest: true },
     },
-    {
-      path: '/social-callback',
-      name: 'social-callback',
-      component: () => import('@/views/Auth/SocialCallbackView.vue'),
-      meta: { layout: 'AuthLayout', requiresGuest: true },
-    },
+    // GOOGLE LOGIN TEMPORANEAMENTE DISABILITATO
+    // {
+    //   path: '/social-callback',
+    //   name: 'social-callback',
+    //   component: () => import('@/views/Auth/SocialCallbackView.vue'),
+    //   meta: { layout: 'AuthLayout', requiresGuest: true },
+    // },
     {
       path: '/register',
       name: 'register',
