@@ -11,7 +11,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Carbon\Carbon;
+use App\Notifications\AppuntamentoFissatoMedicoNotification;
+use App\Notifications\AppuntamentoCancellatoMedicoNotification;
+use App\Notifications\AppuntamentoFissatoPazienteNotification;
 
 class AppuntamentoController extends Controller
 {
@@ -256,12 +260,35 @@ class AppuntamentoController extends Controller
                 'note' => $request->note,
             ]);
 
+            // Carica le relazioni necessarie per le notifiche
+            $appuntamento->load(['proposta.preventivoPaziente', 'poltrona.medico.anagraficaMedico']);
+
+            // Invia email al medico (il medico ha un account User, quindi usa notify())
+            $medico = $appuntamento->poltrona->medico;
+            if ($medico) {
+                $medico->notify(new AppuntamentoFissatoMedicoNotification($appuntamento));
+            }
+
+            // Invia email al paziente (il paziente non ha account, quindi usa Notification::route())
+            $preventivo = $appuntamento->proposta->preventivoPaziente;
+            if ($preventivo && $preventivo->email_paziente) {
+                $nomeStudio = $medico->anagraficaMedico->ragione_sociale ?? 'Studio Medico';
+
+                Notification::route('mail', $preventivo->email_paziente)
+                    ->notify(new AppuntamentoFissatoPazienteNotification(
+                        $appuntamento,
+                        $preventivo->nome_paziente ?? '',
+                        $preventivo->cognome_paziente ?? '',
+                        $nomeStudio
+                    ));
+            }
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Appuntamento fissato con successo',
-                'data' => $appuntamento->load(['proposta.preventivoPaziente', 'poltrona'])
+                'data' => $appuntamento
             ], 201);
 
         } catch (\Exception $e) {
@@ -336,10 +363,29 @@ class AppuntamentoController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // Salva lo stato precedente per controllare se è stato cancellato
+        $statoPrecedente = $appuntamento->stato;
+
         $appuntamento->update([
             'stato' => $request->stato,
             'note' => $request->note ?? $appuntamento->note,
         ]);
+
+        // Se l'appuntamento è stato cancellato, invia email al medico
+        if ($request->stato === 'cancellato' && $statoPrecedente !== 'cancellato') {
+            $appuntamento->load(['proposta.preventivoPaziente', 'poltrona.medico']);
+
+            $medico = $appuntamento->poltrona->medico;
+            $preventivo = $appuntamento->proposta->preventivoPaziente;
+
+            if ($medico && $preventivo) {
+                $medico->notify(new AppuntamentoCancellatoMedicoNotification(
+                    $appuntamento,
+                    $preventivo->nome_paziente ?? '',
+                    $preventivo->cognome_paziente ?? ''
+                ));
+            }
+        }
 
         return response()->json([
             'success' => true,

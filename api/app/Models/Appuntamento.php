@@ -19,6 +19,7 @@ class Appuntamento extends Model
         'ending_date_time',
         'stato',
         'note',
+        'remind_send',
     ];
 
     protected $casts = [
