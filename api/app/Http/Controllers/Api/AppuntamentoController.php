@@ -350,12 +350,22 @@ class AppuntamentoController extends Controller
             if ($appuntamento->poltrona->medico_id !== $user->id) {
                 return response()->json(['error' => 'Non autorizzato'], 403);
             }
+
+            // I medici non possono cancellare appuntamenti
+            if ($request->stato === 'cancellato') {
+                return response()->json(['error' => 'Non autorizzato a cancellare appuntamenti'], 403);
+            }
         } elseif ($user->role !== 'sales') {
             return response()->json(['error' => 'Non autorizzato'], 403);
         }
 
+        // Validazione dinamica in base al ruolo
+        $statiConsentiti = $user->role === 'medico'
+            ? 'required|in:nuovo,visualizzato,assente'
+            : 'required|in:nuovo,visualizzato,assente,cancellato';
+
         $validator = Validator::make($request->all(), [
-            'stato' => 'required|in:nuovo,visualizzato,assente,cancellato',
+            'stato' => $statiConsentiti,
             'note' => 'nullable|string',
         ]);
 

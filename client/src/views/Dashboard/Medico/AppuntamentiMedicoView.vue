@@ -115,14 +115,6 @@
                         <i class="fas fa-user-times"></i>
                       </button>
                       <button
-                        v-if="['nuovo', 'visualizzato'].includes(app.stato)"
-                        class="btn btn-sm btn-danger"
-                        @click="cambiaStato(app, 'cancellato')"
-                        title="Cancella"
-                      >
-                        <i class="fas fa-times-circle"></i>
-                      </button>
-                      <button
                         class="btn btn-sm btn-outline-primary"
                         @click="mostraDettagli(app)"
                         title="Dettagli"
