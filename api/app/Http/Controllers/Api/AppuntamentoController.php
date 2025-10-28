@@ -120,12 +120,14 @@ class AppuntamentoController extends Controller
 
             foreach ($giorniSettimana as $giorno) {
                 $slots = [];
+                $appuntamentiProcessati = []; // Tiene traccia degli appuntamenti già inseriti
 
                 // Trova le disponibilità per questo giorno e questa poltrona
                 $dispGiorno = $poltrona->disponibilita->filter(function ($disp) use ($giorno) {
                     return $disp->giorno_settimana == $giorno['giorno_settimana'];
                 });
 
+                // STEP 1: Genera gli slot dalle disponibilità
                 foreach ($dispGiorno as $disp) {
                     // Genera gli slot di 30 minuti
                     $startTime = Carbon::parse($giorno['data'] . ' ' . $disp->starting_time);
@@ -148,6 +150,10 @@ class AppuntamentoController extends Controller
                                 return ($appStart->lt($slotEnd) && $appEnd->gt($currentSlot));
                             });
 
+                            if ($appuntamento) {
+                                $appuntamentiProcessati[] = $appuntamento->id;
+                            }
+
                             $slots[] = [
                                 'starting_time' => $currentSlot->format('H:i'),
                                 'ending_time' => $slotEnd->format('H:i'),
@@ -166,6 +172,47 @@ class AppuntamentoController extends Controller
                         $currentSlot->addMinutes(30);
                     }
                 }
+
+                // STEP 2: Aggiungi appuntamenti che non hanno più una disponibilità corrispondente
+                $appuntamentiGiornoPoltrona = $appuntamenti->filter(function ($app) use ($poltrona, $giorno, $appuntamentiProcessati) {
+                    if ($app->poltrona_id !== $poltrona->id) {
+                        return false;
+                    }
+
+                    // Già processato nelle disponibilità
+                    if (in_array($app->id, $appuntamentiProcessati)) {
+                        return false;
+                    }
+
+                    // Verifica che l'appuntamento sia nel giorno corrente
+                    $appStart = Carbon::parse($app->starting_date_time);
+                    return $appStart->format('Y-m-d') === $giorno['data'];
+                });
+
+                // Aggiungi questi appuntamenti come slot occupati senza disponibilità
+                foreach ($appuntamentiGiornoPoltrona as $app) {
+                    $appStart = Carbon::parse($app->starting_date_time);
+                    $appEnd = Carbon::parse($app->ending_date_time);
+
+                    $slots[] = [
+                        'starting_time' => $appStart->format('H:i'),
+                        'ending_time' => $appEnd->format('H:i'),
+                        'starting_datetime' => $appStart->format('Y-m-d H:i:s'),
+                        'ending_datetime' => $appEnd->format('Y-m-d H:i:s'),
+                        'disponibile' => false,
+                        'appuntamento' => [
+                            'id' => $app->id,
+                            'paziente' => $app->proposta->preventivoPaziente->nome_paziente . ' ' .
+                                         $app->proposta->preventivoPaziente->cognome_paziente,
+                            'stato' => $app->stato,
+                        ],
+                    ];
+                }
+
+                // Ordina gli slot per orario
+                usort($slots, function ($a, $b) {
+                    return strcmp($a['starting_time'], $b['starting_time']);
+                });
 
                 $agendaPoltrona['giorni'][] = [
                     'data' => $giorno['data'],
