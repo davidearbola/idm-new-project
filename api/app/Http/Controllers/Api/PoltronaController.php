@@ -128,20 +128,24 @@ class PoltronaController extends Controller
         try {
             DB::beginTransaction();
 
-            // Verifica se ci sono appuntamenti futuri
+            // Verifica se ci sono appuntamenti futuri attivi (escludendo solo quelli cancellati o assente)
             $appuntamentiFuturi = $poltrona->appuntamenti()
                 ->where('starting_date_time', '>=', now())
-                ->whereIn('stato', ['confermato'])
+                ->whereNotIn('stato', ['cancellato', 'assente'])
                 ->count();
 
             if ($appuntamentiFuturi > 0) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'Impossibile eliminare: ci sono appuntamenti futuri confermati per questa poltrona'
+                    'message' => 'Impossibile eliminare: ci sono appuntamenti futuri attivi per questa poltrona'
                 ], 400);
             }
 
+            // Elimina prima tutte le disponibilità associate
+            $poltrona->disponibilita()->delete();
+
+            // Elimina la poltrona
             $poltrona->delete();
 
             DB::commit();

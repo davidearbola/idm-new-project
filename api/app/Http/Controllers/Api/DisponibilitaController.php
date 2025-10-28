@@ -169,11 +169,34 @@ class DisponibilitaController extends Controller
             return response()->json(['error' => 'Non autorizzato'], 403);
         }
 
-        $disponibilita->delete();
+        try {
+            DB::beginTransaction();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Disponibilità eliminata con successo'
-        ]);
+            // Verifica se ci sono appuntamenti futuri per questa fascia oraria
+            if ($disponibilita->hasAppuntamentiFuturi()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Impossibile eliminare: ci sono appuntamenti futuri in questa fascia oraria'
+                ], 400);
+            }
+
+            $disponibilita->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Disponibilità eliminata con successo'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore durante l\'eliminazione della disponibilità',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -6,7 +6,7 @@
         <p class="text-muted">Configura le tue poltrone e i relativi orari di disponibilità settimanali</p>
       </div>
       <button class="btn btn-primary" @click="apriModalNuovaPoltrona">
-        <i class="bi bi-plus-circle me-2"></i>Aggiungi Poltrona
+        <i class="fas fa-plus-circle me-2"></i>Aggiungi Poltrona
       </button>
     </div>
 
@@ -17,7 +17,7 @@
     </div>
 
     <div v-else-if="disponibilitaStore.poltrone.length === 0" class="alert alert-info">
-      <i class="bi bi-info-circle me-2"></i>
+      <i class="fas fa-info-circle me-2"></i>
       Non hai ancora creato nessuna poltrona. Clicca su "Aggiungi Poltrona" per iniziare.
     </div>
 
@@ -26,14 +26,14 @@
       <div v-for="poltrona in disponibilitaStore.poltrone" :key="poltrona.id" class="card shadow-sm mb-4">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
-            <i class="bi bi-hospital me-2"></i>{{ poltrona.nome_poltrona }}
+            <i class="fas fa-teeth me-2"></i>{{ poltrona.nome_poltrona }}
           </h5>
           <div class="btn-group">
             <button class="btn btn-sm btn-outline-primary" @click="apriModalModificaPoltrona(poltrona)">
-              <i class="bi bi-pencil me-1"></i>Modifica Nome
+              <i class="fas fa-edit me-1"></i>Modifica Nome
             </button>
             <button class="btn btn-sm btn-outline-danger" @click="confermaEliminaPoltrona(poltrona)">
-              <i class="bi bi-trash me-1"></i>Elimina Poltrona
+              <i class="fas fa-trash me-1"></i>Elimina Poltrona
             </button>
           </div>
         </div>
@@ -65,7 +65,7 @@
                           @click.stop="confermaEliminaDisponibilita(disp, poltrona, giorno)"
                           title="Elimina"
                         >
-                          <i class="bi bi-x-circle-fill"></i>
+                          <i class="fas fa-times-circle"></i>
                         </button>
                       </div>
 
@@ -75,7 +75,7 @@
                         @click="aggiungiDisponibilita(poltrona, giorno)"
                         title="Aggiungi disponibilità"
                       >
-                        <i class="bi bi-plus-circle"></i> Aggiungi fascia
+                        <i class="fas fa-plus-circle"></i> Aggiungi fascia
                       </button>
                     </div>
                   </td>
@@ -86,7 +86,7 @@
         </div>
         <div class="card-footer text-muted">
           <small>
-            <i class="bi bi-info-circle me-1"></i>
+            <i class="fas fa-info-circle me-1"></i>
             Gli slot saranno generati automaticamente con intervalli di <strong>30 minuti</strong> per ogni fascia oraria configurata.
           </small>
         </div>
@@ -177,7 +177,7 @@
               </div>
 
               <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i>
+                <i class="fas fa-info-circle me-2"></i>
                 Gli slot saranno generati automaticamente con intervalli di <strong>30 minuti</strong>
               </div>
 
@@ -219,7 +219,7 @@
           <div class="modal-body">
             <p>Sei sicuro di voler eliminare la poltrona <strong>{{ poltronaDaEliminare?.nome_poltrona }}</strong>?</p>
             <p class="text-danger mb-0">
-              <i class="bi bi-exclamation-triangle me-2"></i>
+              <i class="fas fa-exclamation-triangle me-2"></i>
               Questa azione eliminerà anche tutte le disponibilità associate a questa poltrona.
             </p>
           </div>
