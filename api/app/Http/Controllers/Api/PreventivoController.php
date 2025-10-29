@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Jobs\GeneraControproposte;
 use App\Jobs\ProcessPreventivo;
 use App\Models\PreventivoPaziente;
-use App\Models\ContropropostaMedico; 
+use App\Models\ContropropostaMedico;
+use App\Models\PreventivoAccessCode;
+use App\Notifications\InvioOtpNotification;
 use Illuminate\Http\Request;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 
 class PreventivoController extends Controller
 {
@@ -401,5 +404,202 @@ class PreventivoController extends Controller
                 'message' => 'Si è verificato un errore imprevisto. Riprova più tardi.',
             ], 500);
         }
+    }
+
+    /**
+     * Accesso alle proposte tramite access_token (link da email)
+     */
+    public function accessoConToken(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => 'required|string',
+        ]);
+
+        // Trova il preventivo con questo access_token
+        $preventivo = PreventivoPaziente::where('access_token', $validated['token'])
+            ->where('stato_elaborazione', 'proposte_pronte')
+            ->first();
+
+        if (!$preventivo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Link non valido o proposte non ancora disponibili.'
+            ], 404);
+        }
+
+        // Recupera le proposte per questo preventivo
+        $proposte = ContropropostaMedico::where('preventivo_paziente_id', $preventivo->id)
+            ->with(['medico.anagraficaMedico'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'preventivo' => $preventivo,
+            'proposte' => $proposte,
+        ]);
+    }
+
+    /**
+     * Richiedi un codice OTP per accedere alle proposte
+     */
+    public function richiediOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $email = $validated['email'];
+
+        // Verifica se esistono preventivi con questa email
+        $preventiviCount = PreventivoPaziente::where('email_paziente', $email)
+            ->where('stato_elaborazione', 'proposte_pronte')
+            ->count();
+
+        if ($preventiviCount === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nessuna proposta trovata per questa email.'
+            ], 404);
+        }
+
+        // Verifica se l'email è già bloccata
+        $existingCode = PreventivoAccessCode::forEmail($email)
+            ->latest()
+            ->first();
+
+        if ($existingCode && $existingCode->isBlocked()) {
+            $minutesLeft = now()->diffInMinutes($existingCode->blocked_until);
+            return response()->json([
+                'success' => false,
+                'message' => "Troppi tentativi falliti. Riprova tra {$minutesLeft} minuti.",
+                'blocked_until' => $existingCode->blocked_until->toIso8601String(),
+            ], 429);
+        }
+
+        // Elimina eventuali OTP precedenti per questa email
+        PreventivoAccessCode::where('email', $email)->delete();
+
+        // Genera nuovo OTP
+        $otpCode = PreventivoAccessCode::generateOtp();
+        $expiresAt = now()->addMinutes(10);
+
+        // Salva nel database
+        $accessCode = PreventivoAccessCode::create([
+            'email' => $email,
+            'otp_code' => $otpCode,
+            'expires_at' => $expiresAt,
+            'attempts' => 0,
+        ]);
+
+        // Invia email con OTP
+        try {
+            Notification::route('mail', $email)
+                ->notify(new InvioOtpNotification($otpCode, 10));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Codice di verifica inviato via email.',
+                'expires_in_minutes' => 10,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Errore invio OTP', [
+                'email' => $email,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore durante l\'invio dell\'email. Riprova più tardi.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Verifica il codice OTP e restituisce l'accesso alle proposte
+     */
+    public function verificaOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'otp_code' => 'required|string|size:6',
+        ]);
+
+        $email = $validated['email'];
+        $otpCode = $validated['otp_code'];
+
+        // Trova il codice OTP più recente per questa email
+        $accessCode = PreventivoAccessCode::forEmail($email)
+            ->latest()
+            ->first();
+
+        if (!$accessCode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Codice non valido o scaduto. Richiedi un nuovo codice.',
+            ], 404);
+        }
+
+        // Verifica se è bloccato
+        if ($accessCode->isBlocked()) {
+            $minutesLeft = now()->diffInMinutes($accessCode->blocked_until);
+            return response()->json([
+                'success' => false,
+                'message' => "Troppi tentativi falliti. Riprova tra {$minutesLeft} minuti.",
+                'blocked_until' => $accessCode->blocked_until->toIso8601String(),
+            ], 429);
+        }
+
+        // Verifica se è scaduto
+        if ($accessCode->isExpired()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Il codice è scaduto. Richiedi un nuovo codice.',
+            ], 410);
+        }
+
+        // Verifica il codice OTP
+        if ($accessCode->otp_code !== $otpCode) {
+            $accessCode->incrementAttempts();
+
+            $remainingAttempts = 5 - $accessCode->attempts;
+
+            if ($remainingAttempts > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Codice non corretto. Ti rimangono {$remainingAttempts} tentativi.",
+                    'remaining_attempts' => $remainingAttempts,
+                ], 400);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Troppi tentativi falliti. Account bloccato per 1 ora.',
+                    'blocked_until' => $accessCode->blocked_until->toIso8601String(),
+                ], 429);
+            }
+        }
+
+        // OTP corretto! Elimina il codice usato
+        $accessCode->delete();
+
+        // Recupera tutti i preventivi con questa email
+        $preventivi = PreventivoPaziente::where('email_paziente', $email)
+            ->where('stato_elaborazione', 'proposte_pronte')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Recupera tutte le proposte per questi preventivi
+        $preventiviIds = $preventivi->pluck('id');
+        $proposte = ContropropostaMedico::whereIn('preventivo_paziente_id', $preventiviIds)
+            ->with(['medico.anagraficaMedico', 'preventivoPaziente'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Accesso consentito.',
+            'preventivi' => $preventivi,
+            'proposte' => $proposte,
+        ]);
     }
 }

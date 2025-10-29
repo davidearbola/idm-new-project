@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { Form, Field, ErrorMessage } from 'vee-validate'
 import * as yup from 'yup'
 import { useToast } from 'vue-toastification'
@@ -9,63 +9,208 @@ import axios from 'axios'
 import logoSrc from '@/assets/images/logo-IDM.png'
 
 const route = useRoute()
+const router = useRouter()
 const toast = useToast()
 const telmarStore = useTelmarStore()
 
+// Stati della UI
+const currentStep = ref('initial') // initial | otp_request | otp_verify | show_proposals
 const email = ref('')
+const otpCode = ref('')
 const proposte = ref([])
 const preventivi = ref([])
 const isLoading = ref(false)
-const showEmailForm = ref(true)
 const showModalDettagli = ref(false)
 const propostaSelezionata = ref(null)
 const showModalChiamata = ref(false)
 const propostaPerChiamata = ref(null)
 const isInvioChiamata = ref(false)
 const formChiamataRef = ref(null)
+const otpExpiry = ref(null)
+const remainingTime = ref(0)
+const timerInterval = ref(null)
 
-// Validation schema per la chiamata
+// Validation schemas
+const emailSchema = yup.object({
+  email: yup.string().required("L'email è obbligatoria").email("Inserisci un'email valida"),
+})
+
+const otpSchema = yup.object({
+  otp_code: yup.string().required('Il codice è obbligatorio').length(6, 'Il codice deve essere di 6 cifre'),
+})
+
 const chiamataSchema = yup.object({
   nome: yup.string().required('Il nome è obbligatorio').max(255),
   cognome: yup.string().required('Il cognome è obbligatorio').max(255),
   cellulare: yup.string().required('Il cellulare è obbligatorio').min(9, 'Il cellulare deve essere di almeno 9 cifre').max(20),
 })
 
-// Se l'email è nel query param, carica subito le proposte
-onMounted(() => {
-  if (route.query.email) {
-    email.value = route.query.email
-    recuperaProposte()
+// Timer countdown
+const startCountdown = (expiresInMinutes) => {
+  otpExpiry.value = Date.now() + (expiresInMinutes * 60 * 1000)
+  remainingTime.value = expiresInMinutes * 60
+
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
+  }
+
+  timerInterval.value = setInterval(() => {
+    const now = Date.now()
+    const diff = Math.floor((otpExpiry.value - now) / 1000)
+
+    if (diff <= 0) {
+      clearInterval(timerInterval.value)
+      remainingTime.value = 0
+      toast.warning('Il codice OTP è scaduto. Richiedine uno nuovo.')
+    } else {
+      remainingTime.value = diff
+    }
+  }, 1000)
+}
+
+const formatTime = computed(() => {
+  const minutes = Math.floor(remainingTime.value / 60)
+  const seconds = remainingTime.value % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+})
+
+// Mounted: controlla se c'è un token nell'URL
+onMounted(async () => {
+  if (route.query.token) {
+    // Accesso diretto con token da email
+    await accessoConToken(route.query.token)
   }
 })
 
-const recuperaProposte = async () => {
-  if (!email.value) {
-    toast.error('Inserisci una email valida')
-    return
+watch(() => route.query.token, (newToken) => {
+  if (newToken) {
+    accessoConToken(newToken)
   }
+})
 
+// METODO 1: Accesso con token dall'email
+const accessoConToken = async (token) => {
   isLoading.value = true
 
   try {
-    const response = await axios.post('/api/preventivi/recupera-proposte', {
-      email: email.value
-    })
+    const response = await axios.post('/api/preventivi/accesso-con-token', { token })
 
     if (response.data.success) {
+      preventivi.value = [response.data.preventivo]
       proposte.value = response.data.proposte
-      preventivi.value = response.data.preventivi
-      showEmailForm.value = false
+      email.value = response.data.preventivo.email_paziente
+      currentStep.value = 'show_proposals'
       toast.success('Proposte caricate con successo!')
     }
   } catch (error) {
+    console.error('Errore accesso con token:', error)
     if (error.response?.status === 404) {
-      toast.error('Nessuna proposta trovata per questa email')
+      toast.error('Link non valido o proposte non ancora disponibili')
     } else {
       toast.error('Errore durante il caricamento delle proposte')
     }
+    // Rimanda alla schermata iniziale se il token non è valido
+    router.push('/visualizza-proposte')
+    currentStep.value = 'initial'
   } finally {
     isLoading.value = false
+  }
+}
+
+// METODO 2: Richiedi OTP
+const handleRichiediOtp = async (values) => {
+  isLoading.value = true
+  email.value = values.email
+
+  try {
+    const response = await axios.post('/api/preventivi/richiedi-otp', {
+      email: values.email
+    })
+
+    if (response.data.success) {
+      currentStep.value = 'otp_verify'
+      toast.success(response.data.message)
+      startCountdown(response.data.expires_in_minutes || 10)
+    }
+  } catch (error) {
+    console.error('Errore richiesta OTP:', error)
+    if (error.response?.status === 404) {
+      toast.error('Nessuna proposta trovata per questa email')
+    } else if (error.response?.status === 429) {
+      toast.error(error.response.data.message || 'Troppi tentativi. Riprova più tardi.')
+    } else {
+      toast.error('Errore durante l\'invio del codice')
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// METODO 3: Verifica OTP
+const handleVerificaOtp = async (values) => {
+  isLoading.value = true
+
+  try {
+    const response = await axios.post('/api/preventivi/verifica-otp', {
+      email: email.value,
+      otp_code: values.otp_code
+    })
+
+    if (response.data.success) {
+      preventivi.value = response.data.preventivi
+      proposte.value = response.data.proposte
+      currentStep.value = 'show_proposals'
+      toast.success('Accesso consentito!')
+
+      // Pulisci il timer
+      if (timerInterval.value) {
+        clearInterval(timerInterval.value)
+      }
+    }
+  } catch (error) {
+    console.error('Errore verifica OTP:', error)
+    if (error.response?.status === 400) {
+      toast.error(error.response.data.message || 'Codice non corretto')
+    } else if (error.response?.status === 404) {
+      toast.error('Codice non valido o scaduto')
+    } else if (error.response?.status === 410) {
+      toast.error('Il codice è scaduto. Richiedi un nuovo codice.')
+      tornaAllaRicerca()
+    } else if (error.response?.status === 429) {
+      toast.error(error.response.data.message || 'Troppi tentativi. Account bloccato.')
+      tornaAllaRicerca()
+    } else {
+      toast.error('Errore durante la verifica del codice')
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// UI Helpers
+const tornaAllaRicerca = () => {
+  currentStep.value = 'initial'
+  proposte.value = []
+  preventivi.value = []
+  email.value = ''
+  otpCode.value = ''
+
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
+  }
+
+  // Rimuovi il token dall'URL se presente
+  if (route.query.token) {
+    router.push('/visualizza-proposte')
+  }
+}
+
+const tornaAInserimentoEmail = () => {
+  currentStep.value = 'initial'
+  otpCode.value = ''
+
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
   }
 }
 
@@ -105,14 +250,7 @@ const calcolaTotaleOriginale = computed(() => {
   )
 })
 
-const tornaAllaRicerca = () => {
-  showEmailForm.value = true
-  proposte.value = []
-  preventivi.value = []
-  email.value = ''
-}
-
-// --- MODALE RICHIESTA CHIAMATA ---
+// Richiesta chiamata
 const apriModalChiamata = (proposta) => {
   propostaPerChiamata.value = proposta
   showModalChiamata.value = true
@@ -168,48 +306,128 @@ const handleRichiediChiamata = async (values) => {
         <div class="card border-0 shadow-sm">
           <div class="card-body p-3 p-sm-4 p-md-5">
 
-            <!-- FORM EMAIL -->
-            <div v-if="showEmailForm">
-              <h3 class="mb-2 mb-md-3 fs-4 fs-md-3">Inserisci la tua email</h3>
-              <p class="text-muted small mb-3 mb-md-4">
-                Inserisci l'email che hai usato per caricare il preventivo per visualizzare le proposte ricevute.
-              </p>
+            <!-- STEP 1: Form Email Iniziale -->
+            <div v-if="currentStep === 'initial'">
+              <div class="text-center mb-4">
+                <i class="fa-solid fa-envelope-open-text fa-3x text-primary mb-3"></i>
+                <h3 class="mb-2 fs-4 fs-md-3">Accedi alle tue proposte</h3>
+                <p class="text-muted small mb-0">
+                  Inserisci l'email che hai usato per caricare il preventivo
+                </p>
+              </div>
 
-              <form @submit.prevent="recuperaProposte">
+              <Form @submit="handleRichiediOtp" :validation-schema="emailSchema" v-slot="{ errors }">
                 <div class="mb-3">
-                  <label class="form-label small">Email</label>
-                  <input
+                  <label class="form-label fw-semibold">Email</label>
+                  <Field
+                    name="email"
                     type="email"
-                    class="form-control form-control-sm"
-                    v-model="email"
+                    class="form-control"
+                    :class="{ 'is-invalid': errors.email }"
                     placeholder="la-tua-email@esempio.it"
-                    required
                   />
+                  <ErrorMessage name="email" class="text-danger small" />
+                  <div class="form-text">
+                    <i class="fa-solid fa-info-circle me-1"></i>
+                    Ti invieremo un codice di verifica via email
+                  </div>
                 </div>
 
-                <div class="d-grid d-sm-flex justify-content-sm-end">
+                <div class="d-grid">
                   <button type="submit" class="btn btn-primary btn-lg" :disabled="isLoading">
                     <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"></span>
-                    <span class="d-none d-sm-inline">{{ isLoading ? 'Caricamento...' : 'Visualizza Proposte' }}</span>
-                    <span class="d-sm-none">{{ isLoading ? 'Caricamento...' : 'Visualizza' }}</span>
+                    <i v-else class="fa-solid fa-paper-plane me-2"></i>
+                    {{ isLoading ? 'Invio in corso...' : 'Invia Codice di Verifica' }}
                   </button>
                 </div>
-              </form>
+              </Form>
+
+              <div class="text-center mt-4">
+                <p class="text-muted small mb-0">
+                  <i class="fa-solid fa-shield-halved me-1"></i>
+                  I tuoi dati sono protetti e sicuri
+                </p>
+              </div>
             </div>
 
-            <!-- LISTA PROPOSTE -->
-            <div v-else>
+            <!-- STEP 2: Verifica OTP -->
+            <div v-if="currentStep === 'otp_verify'">
+              <div class="text-center mb-4">
+                <i class="fa-solid fa-lock fa-3x text-success mb-3"></i>
+                <h3 class="mb-2 fs-4 fs-md-3">Verifica il codice</h3>
+                <p class="text-muted small mb-0">
+                  Abbiamo inviato un codice di 6 cifre a<br>
+                  <strong>{{ email }}</strong>
+                </p>
+              </div>
+
+              <Form @submit="handleVerificaOtp" :validation-schema="otpSchema" v-slot="{ errors }">
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Codice di Verifica</label>
+                  <Field
+                    name="otp_code"
+                    type="text"
+                    class="form-control form-control-lg text-center"
+                    :class="{ 'is-invalid': errors.otp_code }"
+                    placeholder="000000"
+                    maxlength="6"
+                    style="letter-spacing: 0.5em; font-size: 1.5rem;"
+                  />
+                  <ErrorMessage name="otp_code" class="text-danger small text-center d-block" />
+
+                  <div v-if="remainingTime > 0" class="form-text text-center">
+                    <i class="fa-solid fa-clock me-1"></i>
+                    Il codice scade tra <strong>{{ formatTime }}</strong>
+                  </div>
+                  <div v-else class="form-text text-center text-danger">
+                    <i class="fa-solid fa-exclamation-triangle me-1"></i>
+                    Codice scaduto. Richiedi un nuovo codice.
+                  </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                  <button type="submit" class="btn btn-success btn-lg" :disabled="isLoading || remainingTime === 0">
+                    <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+                    <i v-else class="fa-solid fa-check-circle me-2"></i>
+                    {{ isLoading ? 'Verifica in corso...' : 'Verifica Codice' }}
+                  </button>
+                  <button type="button" @click="tornaAInserimentoEmail" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-2"></i>
+                    Torna Indietro
+                  </button>
+                </div>
+              </Form>
+
+              <div class="text-center mt-4">
+                <p class="text-muted small mb-0">
+                  Non hai ricevuto il codice?
+                  <button @click="tornaAInserimentoEmail" class="btn btn-link btn-sm p-0">
+                    Richiedi un nuovo codice
+                  </button>
+                </p>
+              </div>
+            </div>
+
+            <!-- STEP 3: Lista Proposte -->
+            <div v-if="currentStep === 'show_proposals'">
               <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3 mb-md-4">
-                <h3 class="mb-0 fs-5 fs-md-4">Proposte per {{ email }}</h3>
+                <div>
+                  <h3 class="mb-1 fs-5 fs-md-4">
+                    <i class="fa-solid fa-file-invoice me-2 text-primary"></i>
+                    Le tue proposte
+                  </h3>
+                  <p class="text-muted small mb-0">{{ email }}</p>
+                </div>
                 <button @click="tornaAllaRicerca" class="btn btn-sm btn-outline-secondary">
+                  <i class="fa-solid fa-arrow-left me-1"></i>
                   <span class="d-none d-sm-inline">Cerca con un'altra email</span>
                   <span class="d-sm-none">Altra email</span>
                 </button>
               </div>
 
-              <div class="row g-3 g-md-4">
+              <div v-if="proposte.length > 0" class="row g-3 g-md-4">
                 <div v-for="proposta in proposte" :key="proposta.id" class="col-12 col-md-6">
-                  <div class="card h-100 shadow-sm border-0">
+                  <div class="card h-100 shadow-sm border-0 hover-card">
                     <div class="card-body p-3 p-md-4">
                       <h5 class="card-title fw-bold text-primary mb-2 mb-md-3 fs-6 fs-md-5">
                         <a :href="`/profilo-medico/${proposta.medico?.id}`" target="_blank" class="text-decoration-none text-primary">
@@ -227,7 +445,7 @@ const handleRichiediChiamata = async (values) => {
                         <i class="fa-solid fa-calendar me-1 me-md-2"></i>
                         Ricevuta il {{ new Date(proposta.created_at).toLocaleDateString('it-IT') }}
                       </p>
-                      <div class="d-flex justify-content-between align-items-center mb-2 mb-md-3">
+                      <div class="d-flex justify-content-between align-items-center mb-2 mb-md-3 p-3 bg-light rounded">
                         <span class="text-muted small">Prezzo Totale:</span>
                         <span class="fs-5 fs-md-4 fw-bold text-success">
                           € {{ formatCurrency(calcolaTotaleProposta(proposta)) }}
@@ -235,10 +453,14 @@ const handleRichiediChiamata = async (values) => {
                       </div>
                       <div class="d-grid gap-2">
                         <button @click="apriDettagli(proposta)" class="btn btn-outline-primary btn-sm">
-                          <i class="fa-solid fa-eye me-1 me-md-2"></i><span class="d-none d-sm-inline">Vedi Dettagli</span><span class="d-sm-none">Dettagli</span>
+                          <i class="fa-solid fa-eye me-1 me-md-2"></i>
+                          <span class="d-none d-sm-inline">Vedi Dettagli</span>
+                          <span class="d-sm-none">Dettagli</span>
                         </button>
                         <button @click="apriModalChiamata(proposta)" class="btn btn-success btn-sm">
-                          <i class="fa-solid fa-phone me-1 me-md-2"></i><span class="d-none d-sm-inline">Fissa appuntamento</span><span class="d-sm-none">Fissa appuntamento</span>
+                          <i class="fa-solid fa-phone me-1 me-md-2"></i>
+                          <span class="d-none d-sm-inline">Fissa appuntamento</span>
+                          <span class="d-sm-none">Fissa appuntamento</span>
                         </button>
                       </div>
                     </div>
@@ -246,9 +468,9 @@ const handleRichiediChiamata = async (values) => {
                 </div>
               </div>
 
-              <div v-if="proposte.length === 0" class="text-center p-3 p-sm-4 p-md-5">
+              <div v-else class="text-center p-3 p-sm-4 p-md-5">
                 <i class="fa-solid fa-inbox fa-3x fa-md-4x text-muted mb-2 mb-md-3"></i>
-                <p class="text-muted small mb-0">Nessuna proposta disponibile</p>
+                <p class="text-muted mb-0">Nessuna proposta disponibile</p>
               </div>
             </div>
 
@@ -460,6 +682,16 @@ const handleRichiediChiamata = async (values) => {
   .responsive-lead {
     font-size: 1.25rem;
   }
+}
+
+/* Card hover effect */
+.hover-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Tabelle responsive */

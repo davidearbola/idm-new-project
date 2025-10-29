@@ -39,8 +39,13 @@ Route::get('/preventivi/{preventivoPaziente}/stato', [PreventivoController::clas
 Route::post('/preventivi/{preventivoPaziente}/conferma', [PreventivoController::class, 'conferma']);
 Route::post('/preventivi/{preventivoPaziente}/salva-dati-paziente', [PreventivoController::class, 'salvaDatiPaziente']);
 Route::get('/preventivi/{preventivoPaziente}/proposte-stato', [PreventivoController::class, 'proposteStato']);
-Route::post('/preventivi/recupera-proposte', [PreventivoController::class, 'recuperaProposte']);
+Route::post('/preventivi/recupera-proposte', [PreventivoController::class, 'recuperaProposte']); // DEPRECATO - Manteniamo per backward compatibility
 Route::post('/preventivi/richiedi-chiamata', [PreventivoController::class, 'richiediChiamata']);
+
+// --- NUOVE ROTTE SICURE PER ACCESSO PROPOSTE ---
+Route::post('/preventivi/accesso-con-token', [PreventivoController::class, 'accessoConToken']);
+Route::post('/preventivi/richiedi-otp', [PreventivoController::class, 'richiediOtp'])->middleware('throttle:5,1'); // Max 5 richieste al minuto
+Route::post('/preventivi/verifica-otp', [PreventivoController::class, 'verificaOtp'])->middleware('throttle:10,1'); // Max 10 verifiche al minuto
 
 // --- PROFILO PUBBLICO MEDICO ---
 Route::get('/profilo-pubblico-medico/{medicoId}', [ProfiloMedicoController::class, 'showPublicProfile'])

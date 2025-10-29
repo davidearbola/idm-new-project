@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class PreventivoPaziente extends Model
 {
@@ -23,6 +24,7 @@ class PreventivoPaziente extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'access_token',
         'file_path',
         'file_name_originale',
         'stato_elaborazione',
@@ -54,5 +56,19 @@ class PreventivoPaziente extends Model
     public function controproposte()
     {
         return $this->hasMany(ContropropostaMedico::class);
+    }
+
+    /**
+     * Boot del modello - genera automaticamente l'access_token
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($preventivo) {
+            if (empty($preventivo->access_token)) {
+                $preventivo->access_token = (string) Str::uuid();
+            }
+        });
     }
 }
