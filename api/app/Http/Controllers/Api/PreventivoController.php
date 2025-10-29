@@ -369,7 +369,7 @@ class PreventivoController extends Controller
 
             // Verifica se la chiamata è andata a buon fine
             if ($response->successful()) {
-                $proposta->update(["stato" => "accettata"]);
+                $proposta->update(["stato" => "richiesta_chiamata"]);
                 $preventivo->update([
                     "cellulare_paziente" => $telefono,
                     "nome_paziente" => $validated['nome'],

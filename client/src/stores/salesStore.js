@@ -73,6 +73,27 @@ export const useSalesStore = defineStore('sales', {
       }
     },
 
+    async rifiutaProposta(propostaId) {
+      this.isLoading = true
+      try {
+        const response = await axios.post('/api/sales/rifiuta-proposta', {
+          proposta_id: propostaId
+        })
+        return {
+          success: true,
+          message: response.data.message || 'Proposta rifiutata con successo'
+        }
+      } catch (error) {
+        console.error('Errore nel rifiutare la proposta:', error)
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Errore nel rifiutare la proposta'
+        }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
     setPropostaSelezionata(proposta) {
       this.propostaSelezionata = proposta
     },

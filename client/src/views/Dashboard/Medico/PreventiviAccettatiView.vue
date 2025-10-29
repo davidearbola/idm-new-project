@@ -46,11 +46,11 @@ const formatDate = (dateString) => {
           <div class="card-body">
             <div class="row align-items-center">
               <div class="col-md-4">
-                <h5 class="card-title mb-1">Paziente: {{ proposta.preventivo_paziente.anagrafica_paziente.user.name }}</h5>
+                <h5 class="card-title mb-1">Paziente: {{ proposta.preventivo_paziente.nome_paziente }} {{ proposta.preventivo_paziente.cognome_paziente }}</h5>
                 <small class="text-muted">Proposta accettata il: {{ formatDate(proposta.updated_at) }}</small>
                 <div class="mt-2">
-                    <p class="mb-0"><i class="fa-solid fa-envelope me-2"></i> {{ proposta.preventivo_paziente.anagrafica_paziente.user.email }}</p>
-                    <p class="mb-0"><i class="fa-solid fa-phone me-2"></i> {{ proposta.preventivo_paziente.anagrafica_paziente.cellulare }}</p>
+                    <p class="mb-0"><i class="fa-solid fa-envelope me-2"></i> {{ proposta.preventivo_paziente.email_paziente }}</p>
+                    <p class="mb-0"><i class="fa-solid fa-phone me-2"></i> {{ proposta.preventivo_paziente.cellulare_paziente }}</p>
                 </div>
               </div>
               <div class="col-md-4 text-center">

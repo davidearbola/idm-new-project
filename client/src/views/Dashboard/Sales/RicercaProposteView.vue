@@ -65,7 +65,7 @@
                     <th>Medico</th>
                     <th>Indirizzo</th>
                     <th class="text-end">Totale</th>
-                    <th>Data Accettazione</th>
+                    <th>Ultima Modifica</th>
                     <th class="text-center">Azioni</th>
                   </tr>
                 </thead>
@@ -75,7 +75,7 @@
                       <strong>#{{ proposta.id }}</strong>
                     </td>
                     <td>
-                      <span class="badge bg-success">Accettata</span>
+                      <span class="badge" :class="getStatoBadgeClass(proposta.stato)">{{ getStatoLabel(proposta.stato) }}</span>
                     </td>
                     <td>
                       <strong>{{ proposta.preventivo_paziente?.nome_paziente }} {{ proposta.preventivo_paziente?.cognome_paziente || 'N/A' }}</strong>
@@ -122,11 +122,20 @@
                           <i class="fas fa-file-invoice"></i>
                         </button>
                         <button
+                          v-if="['richiesta_chiamata', 'appuntamento_annullato', 'rifiutata'].includes(proposta.stato)"
                           class="btn btn-primary"
                           @click="fissaAppuntamento(proposta)"
                           title="Fissa Appuntamento"
                         >
                           <i class="fas fa-calendar-check"></i>
+                        </button>
+                        <button
+                          v-if="['richiesta_chiamata', 'appuntamento_annullato'].includes(proposta.stato)"
+                          class="btn btn-danger"
+                          @click="rifiutaProposta(proposta)"
+                          title="Rifiuta Proposta"
+                        >
+                          <i class="fas fa-times"></i>
                         </button>
                       </div>
                     </td>
@@ -302,6 +311,16 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
             <button
+              v-if="propostaSelezionata && ['richiesta_chiamata', 'appuntamento_annullato'].includes(propostaSelezionata.stato)"
+              type="button"
+              class="btn btn-danger"
+              @click="rifiutaPropostaDaModale"
+            >
+              <i class="fas fa-times me-2"></i>
+              Rifiuta Proposta
+            </button>
+            <button
+              v-if="propostaSelezionata && ['richiesta_chiamata', 'appuntamento_annullato', 'rifiutata'].includes(propostaSelezionata.stato)"
               type="button"
               class="btn btn-primary"
               @click="fissaAppuntamentoDaModale"
@@ -432,6 +451,53 @@ function fissaAppuntamentoDaModale() {
     dettagliModalInstance.value.hide()
   }
   fissaAppuntamento(propostaSelezionata.value)
+}
+
+async function rifiutaPropostaDaModale() {
+  if (dettagliModalInstance.value) {
+    dettagliModalInstance.value.hide()
+  }
+  await rifiutaProposta(propostaSelezionata.value)
+}
+
+async function rifiutaProposta(proposta) {
+  if (!confirm(`Sei sicuro di voler rifiutare la proposta #${proposta.id}?`)) {
+    return
+  }
+
+  const result = await salesStore.rifiutaProposta(proposta.id)
+
+  if (result.success) {
+    toast.success(result.message)
+    // Ricarica le proposte
+    cerca()
+  } else {
+    toast.error(result.message)
+  }
+}
+
+function getStatoLabel(stato) {
+  const labels = {
+    'richiesta_chiamata': 'Richiesta Chiamata',
+    'fissato_appuntamento': 'Appuntamento Fissato',
+    'appuntamento_annullato': 'Appuntamento Annullato',
+    'rifiutata': 'Rifiutata',
+    'inviata': 'Inviata',
+    'visualizzata': 'Visualizzata'
+  }
+  return labels[stato] || stato
+}
+
+function getStatoBadgeClass(stato) {
+  const classes = {
+    'richiesta_chiamata': 'bg-warning',
+    'fissato_appuntamento': 'bg-success',
+    'appuntamento_annullato': 'bg-danger',
+    'rifiutata': 'bg-secondary',
+    'inviata': 'bg-info',
+    'visualizzata': 'bg-primary'
+  }
+  return classes[stato] || 'bg-secondary'
 }
 </script>
 

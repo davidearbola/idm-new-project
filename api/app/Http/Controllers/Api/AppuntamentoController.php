@@ -48,10 +48,46 @@ class AppuntamentoController extends Controller
             'preventivoPaziente',
             'medico.anagraficaMedico'
         ])
-        ->where('stato', 'accettata')
+        ->whereIn('stato', ['richiesta_chiamata', 'fissato_appuntamento', 'appuntamento_annullato', 'rifiutata'])
         ->get();
 
         return response()->json($proposte);
+    }
+
+    /**
+     * Rifiuta una proposta (per sales)
+     */
+    public function rifiutaProposta(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'sales') {
+            return response()->json(['error' => 'Non autorizzato'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'proposta_id' => 'required|exists:controproposte_medici,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $proposta = ContropropostaMedico::find($request->proposta_id);
+
+        if (!$proposta) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Proposta non trovata'
+            ], 404);
+        }
+
+        $proposta->update(['stato' => 'rifiutata']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Proposta rifiutata con successo'
+        ]);
     }
 
     /**
@@ -307,6 +343,12 @@ class AppuntamentoController extends Controller
                 'note' => $request->note,
             ]);
 
+            // Aggiorna lo stato della controproposta a 'fissato_appuntamento'
+            $proposta = ContropropostaMedico::find($request->proposta_id);
+            if ($proposta) {
+                $proposta->update(['stato' => 'fissato_appuntamento']);
+            }
+
             // Carica le relazioni necessarie per le notifiche
             $appuntamento->load(['proposta.preventivoPaziente', 'poltrona.medico.anagraficaMedico']);
 
@@ -418,7 +460,7 @@ class AppuntamentoController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Salva lo stato precedente per controllare se è stato cancellato
+        // Salva lo stato precedente per controllare se è stato cancellato o segnato come assente
         $statoPrecedente = $appuntamento->stato;
 
         $appuntamento->update([
@@ -426,19 +468,28 @@ class AppuntamentoController extends Controller
             'note' => $request->note ?? $appuntamento->note,
         ]);
 
-        // Se l'appuntamento è stato cancellato, invia email al medico
-        if ($request->stato === 'cancellato' && $statoPrecedente !== 'cancellato') {
-            $appuntamento->load(['proposta.preventivoPaziente', 'poltrona.medico']);
+        // Se l'appuntamento è stato cancellato o segnato come assente, aggiorna lo stato della proposta
+        if (in_array($request->stato, ['cancellato', 'assente']) && !in_array($statoPrecedente, ['cancellato', 'assente'])) {
+            // Aggiorna lo stato della controproposta a 'appuntamento_annullato'
+            $proposta = $appuntamento->proposta;
+            if ($proposta) {
+                $proposta->update(['stato' => 'appuntamento_annullato']);
+            }
 
-            $medico = $appuntamento->poltrona->medico;
-            $preventivo = $appuntamento->proposta->preventivoPaziente;
+            // Se l'appuntamento è stato cancellato, invia email al medico
+            if ($request->stato === 'cancellato') {
+                $appuntamento->load(['proposta.preventivoPaziente', 'poltrona.medico']);
 
-            if ($medico && $preventivo) {
-                $medico->notify(new AppuntamentoCancellatoMedicoNotification(
-                    $appuntamento,
-                    $preventivo->nome_paziente ?? '',
-                    $preventivo->cognome_paziente ?? ''
-                ));
+                $medico = $appuntamento->poltrona->medico;
+                $preventivo = $appuntamento->proposta->preventivoPaziente;
+
+                if ($medico && $preventivo) {
+                    $medico->notify(new AppuntamentoCancellatoMedicoNotification(
+                        $appuntamento,
+                        $preventivo->nome_paziente ?? '',
+                        $preventivo->cognome_paziente ?? ''
+                    ));
+                }
             }
         }
 

@@ -124,6 +124,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- ROTTE SALES ---
     Route::prefix('sales')->group(function () {
         Route::post('/cerca-proposte', [AppuntamentoController::class, 'cercaProposte']);
+        Route::post('/rifiuta-proposta', [AppuntamentoController::class, 'rifiutaProposta']);
         Route::get('/agenda-medico/{medicoId}', [AppuntamentoController::class, 'getAgendaMedico']);
         Route::post('/fissa-appuntamento', [AppuntamentoController::class, 'fissaAppuntamento']);
     });

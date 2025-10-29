@@ -95,13 +95,10 @@ class PropostaController extends Controller
     {
         $medico = Auth::user();
 
+        // Recupera le proposte con stato 'richiesta_chiamata' o 'fissato_appuntamento'
         $proposte = $medico->controproposte()
-            ->where('stato', 'accettata')
-            ->with([
-                'preventivoPaziente.anagraficaPaziente' => function ($query) {
-                    $query->with('user:id,name,email');
-                }
-            ])
+            ->whereIn('stato', ['richiesta_chiamata', 'fissato_appuntamento'])
+            ->with(['preventivoPaziente'])
             ->orderBy('updated_at', 'desc')
             ->get();
 
