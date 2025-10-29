@@ -13,9 +13,10 @@ const props = defineProps({
 const isListinoCompleted = computed(() => !!props.anagrafica?.step_listino_completed_at);
 const isProfiloCompleted = computed(() => !!props.anagrafica?.step_profilo_completed_at);
 const isStaffCompleted = computed(() => !!props.anagrafica?.step_staff_completed_at);
+const isAgendaCompleted = computed(() => !!props.anagrafica?.step_agenda_completed_at);
 
 // Calcola il progresso totale per la barra
-const steps = computed(() => [isListinoCompleted.value, isProfiloCompleted.value, isStaffCompleted.value]);
+const steps = computed(() => [isListinoCompleted.value, isProfiloCompleted.value, isStaffCompleted.value, isAgendaCompleted.value]);
 const progress = computed(() => {
   const completedCount = steps.value.filter(Boolean).length;
   return (completedCount / steps.value.length) * 100;
@@ -50,9 +51,13 @@ const progress = computed(() => {
           <i class="fa-solid fa-fw me-2" :class="isProfiloCompleted ? 'fa-circle-check text-success' : 'fa-circle'"></i>
           <RouterLink to="/dashboard/profilo">Aggiungi descrizione e foto (min. 3)</RouterLink>
         </li>
-        <li class="d-flex align-items-center" :class="{ 'completed': isStaffCompleted }">
+        <li class="d-flex align-items-center mb-2" :class="{ 'completed': isStaffCompleted }">
           <i class="fa-solid fa-fw me-2" :class="isStaffCompleted ? 'fa-circle-check text-success' : 'fa-circle'"></i>
           <RouterLink to="/dashboard/profilo">Aggiungi almeno un membro dello staff</RouterLink>
+        </li>
+        <li class="d-flex align-items-center" :class="{ 'completed': isAgendaCompleted }">
+          <i class="fa-solid fa-fw me-2" :class="isAgendaCompleted ? 'fa-circle-check text-success' : 'fa-circle'"></i>
+          <RouterLink to="/dashboard/poltrone">Configura poltrone e disponibilità (min. 1 poltrona con 1 fascia)</RouterLink>
         </li>
       </ul>
     </div>

@@ -212,8 +212,8 @@
     <div class="modal fade" id="modalConfermaEliminazionePoltrona" tabindex="-1" ref="modalConfermaEliminazionePoltrona">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title">Conferma Eliminazione Poltrona</h5>
+          <div class="modal-header bg-danger">
+            <h5 class="modal-title text-white">Conferma Eliminazione Poltrona</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">

@@ -23,6 +23,7 @@ class AnagraficaMedico extends Model
         'step_listino_completed_at',
         'step_profilo_completed_at',
         'step_staff_completed_at',
+        'step_agenda_completed_at',
         'tipo_registrazione'
     ];
 
@@ -30,6 +31,7 @@ class AnagraficaMedico extends Model
         'step_listino_completed_at' => 'datetime',
         'step_profilo_completed_at' => 'datetime',
         'step_staff_completed_at' => 'datetime',
+        'step_agenda_completed_at' => 'datetime',
     ];
 
     public function user()

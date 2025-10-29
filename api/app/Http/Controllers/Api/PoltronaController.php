@@ -142,11 +142,14 @@ class PoltronaController extends Controller
                 ], 400);
             }
 
-            // Elimina prima tutte le disponibilità associate
-            $poltrona->disponibilita()->delete();
+            // Le disponibilità verranno automaticamente eliminate grazie al cascade nella loro foreign key
+            // Gli appuntamenti invece avranno poltrona_id = NULL grazie al nullOnDelete
 
             // Elimina la poltrona
             $poltrona->delete();
+
+            // Verifica e aggiorna lo step agenda (potrebbe essere da rimuovere se non ci sono più poltrone con disponibilità)
+            $this->verificaEComletaStepAgenda($medico);
 
             DB::commit();
 
@@ -162,6 +165,32 @@ class PoltronaController extends Controller
                 'message' => 'Errore durante l\'eliminazione della poltrona',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Verifica se il medico ha almeno 1 poltrona con almeno 1 disponibilità
+     * e completa lo step_agenda_completed_at se necessario
+     */
+    private function verificaEComletaStepAgenda($medico)
+    {
+        // Verifica se ci sono poltrone con almeno una disponibilità
+        $hasPoltronaConDisponibilita = PoltronaMedico::where('medico_id', $medico->id)
+            ->whereHas('disponibilita')
+            ->exists();
+
+        $anagrafica = $medico->anagraficaMedico;
+
+        if ($hasPoltronaConDisponibilita) {
+            // Se ha almeno una poltrona con disponibilità e lo step non è completato, completalo
+            if (!$anagrafica->step_agenda_completed_at) {
+                $anagrafica->update(['step_agenda_completed_at' => now()]);
+            }
+        } else {
+            // Se non ha più poltrone con disponibilità, rimuovi il completamento dello step
+            if ($anagrafica->step_agenda_completed_at) {
+                $anagrafica->update(['step_agenda_completed_at' => null]);
+            }
         }
     }
 }

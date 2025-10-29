@@ -87,6 +87,9 @@ class DisponibilitaController extends Controller
             'ending_time' => $request->ending_time,
         ]);
 
+        // Verifica e completa lo step agenda se necessario
+        $this->verificaEComletaStepAgenda($medico);
+
         return response()->json([
             'success' => true,
             'message' => 'Disponibilità creata con successo',
@@ -183,6 +186,9 @@ class DisponibilitaController extends Controller
 
             $disponibilita->delete();
 
+            // Verifica e aggiorna lo step agenda (potrebbe essere da rimuovere)
+            $this->verificaEComletaStepAgenda($medico);
+
             DB::commit();
 
             return response()->json([
@@ -197,6 +203,32 @@ class DisponibilitaController extends Controller
                 'message' => 'Errore durante l\'eliminazione della disponibilità',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Verifica se il medico ha almeno 1 poltrona con almeno 1 disponibilità
+     * e completa lo step_agenda_completed_at se necessario
+     */
+    private function verificaEComletaStepAgenda($medico)
+    {
+        // Verifica se ci sono poltrone con almeno una disponibilità
+        $hasPoltronaConDisponibilita = PoltronaMedico::where('medico_id', $medico->id)
+            ->whereHas('disponibilita')
+            ->exists();
+
+        $anagrafica = $medico->anagraficaMedico;
+
+        if ($hasPoltronaConDisponibilita) {
+            // Se ha almeno una poltrona con disponibilità e lo step non è completato, completalo
+            if (!$anagrafica->step_agenda_completed_at) {
+                $anagrafica->update(['step_agenda_completed_at' => now()]);
+            }
+        } else {
+            // Se non ha più poltrone con disponibilità, rimuovi il completamento dello step
+            if ($anagrafica->step_agenda_completed_at) {
+                $anagrafica->update(['step_agenda_completed_at' => null]);
+            }
         }
     }
 }

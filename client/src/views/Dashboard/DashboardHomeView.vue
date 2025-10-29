@@ -13,9 +13,10 @@ const router = useRouter();
 const isOnboardingCompleted = computed(() => {
     const anagrafica = user.value?.anagrafica_medico;
     if (!anagrafica) return false;
-    return anagrafica.step_listino_completed_at && 
-           anagrafica.step_profilo_completed_at && 
-           anagrafica.step_staff_completed_at;
+    return anagrafica.step_listino_completed_at &&
+           anagrafica.step_profilo_completed_at &&
+           anagrafica.step_staff_completed_at &&
+           anagrafica.step_agenda_completed_at;
 });
 
 const goToProfiloPubblico = () => {

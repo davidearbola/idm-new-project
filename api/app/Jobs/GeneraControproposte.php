@@ -39,6 +39,7 @@ class GeneraControproposte implements ShouldQueue
             ->whereNotNull('anagrafica_medici.step_listino_completed_at')
             ->whereNotNull('anagrafica_medici.step_profilo_completed_at')
             ->whereNotNull('anagrafica_medici.step_staff_completed_at')
+            ->whereNotNull('anagrafica_medici.step_agenda_completed_at')
             ->select('users.*')
             ->selectRaw(
                 '( 6371 * acos( cos( radians(?) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(?) ) + sin( radians(?) ) * sin( radians( lat ) ) ) ) AS distance',

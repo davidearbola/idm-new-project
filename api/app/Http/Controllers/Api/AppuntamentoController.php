@@ -407,8 +407,15 @@ class AppuntamentoController extends Controller
 
         // Se è un medico, mostra solo i suoi appuntamenti
         if ($user->role === 'medico') {
-            $query->whereHas('poltrona', function ($q) use ($user) {
-                $q->where('medico_id', $user->id);
+            // Filtra appuntamenti del medico sia tramite poltrona che tramite proposta
+            // (per includere anche appuntamenti dove la poltrona è stata eliminata)
+            $query->where(function ($q) use ($user) {
+                $q->whereHas('poltrona', function ($subQ) use ($user) {
+                    $subQ->where('medico_id', $user->id);
+                })
+                ->orWhereHas('proposta', function ($subQ) use ($user) {
+                    $subQ->where('medico_user_id', $user->id);
+                });
             });
         }
 
@@ -434,7 +441,11 @@ class AppuntamentoController extends Controller
 
         // Verifica autorizzazione
         if ($user->role === 'medico') {
-            if ($appuntamento->poltrona->medico_id !== $user->id) {
+            // Verifica proprietà tramite poltrona (se esiste) o tramite proposta
+            $isMedicoOwner = ($appuntamento->poltrona && $appuntamento->poltrona->medico_id === $user->id)
+                || ($appuntamento->proposta && $appuntamento->proposta->medico_user_id === $user->id);
+
+            if (!$isMedicoOwner) {
                 return response()->json(['error' => 'Non autorizzato'], 403);
             }
 
@@ -478,9 +489,10 @@ class AppuntamentoController extends Controller
 
             // Se l'appuntamento è stato cancellato, invia email al medico
             if ($request->stato === 'cancellato') {
-                $appuntamento->load(['proposta.preventivoPaziente', 'poltrona.medico']);
+                $appuntamento->load(['proposta.preventivoPaziente', 'proposta.medico', 'poltrona.medico']);
 
-                $medico = $appuntamento->poltrona->medico;
+                // Ottieni il medico tramite poltrona (se esiste) o tramite proposta
+                $medico = $appuntamento->poltrona?->medico ?? $appuntamento->proposta?->medico;
                 $preventivo = $appuntamento->proposta->preventivoPaziente;
 
                 if ($medico && $preventivo) {
@@ -511,8 +523,13 @@ class AppuntamentoController extends Controller
             return response()->json(['error' => 'Non autorizzato'], 403);
         }
 
-        $appuntamenti = Appuntamento::whereHas('poltrona', function ($query) use ($medico) {
-            $query->where('medico_id', $medico->id);
+        $appuntamenti = Appuntamento::where(function ($q) use ($medico) {
+            $q->whereHas('poltrona', function ($subQ) use ($medico) {
+                $subQ->where('medico_id', $medico->id);
+            })
+            ->orWhereHas('proposta', function ($subQ) use ($medico) {
+                $subQ->where('medico_user_id', $medico->id);
+            });
         })
         ->whereIn('stato', ['nuovo', 'visualizzato'])
         ->where('starting_date_time', '>=', now())
@@ -535,7 +552,10 @@ class AppuntamentoController extends Controller
         }
 
         // Verifica che l'appuntamento appartenga al medico
-        if ($appuntamento->poltrona->medico_id !== $user->id) {
+        $isMedicoOwner = ($appuntamento->poltrona && $appuntamento->poltrona->medico_id === $user->id)
+            || ($appuntamento->proposta && $appuntamento->proposta->medico_user_id === $user->id);
+
+        if (!$isMedicoOwner) {
             return response()->json(['error' => 'Non autorizzato'], 403);
         }
 
