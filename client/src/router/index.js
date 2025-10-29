@@ -94,6 +94,12 @@ const router = createRouter({
       component: () => import('../views/Auth/ResendVerificationView.vue'),
       meta: { layout: 'AuthLayout', requiresGuest: true },
     },
+    {
+      path: '/contatto-medico',
+      name: 'contatto-medico',
+      component: () => import('../views/Auth/ContattoMedicoView.vue'),
+      meta: { layout: 'AuthLayout' },
+    },
     // **** ROTTE DASHBOARD ****
     {
       path: '/dashboard',

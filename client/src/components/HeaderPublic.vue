@@ -98,10 +98,9 @@ watch(() => route.path, () => {
             <RouterLink class="nav-link" to="/come-funziona">Come Funziona</RouterLink>
           </li>
           <template v-if="!user">
-            <!-- REGISTRAZIONI TEMPORANEAMENTE DISABILITATE -->
-            <!-- <li class="nav-item">
-              <RouterLink class="nav-link" to="/register-medico">Sei un dentista?</RouterLink>
-            </li> -->
+            <li class="nav-item">
+              <RouterLink class="nav-link" to="/contatto-medico">Sei un dentista?</RouterLink>
+            </li>
             <li class="nav-item ms-lg-2">
               <RouterLink to="/login" class="btn btn-primary btn-sm">Accedi</RouterLink>
             </li>

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\PropostaController;
 use App\Http\Controllers\Api\SocialiteController;
 use App\Http\Controllers\Api\DisponibilitaController;
 use App\Http\Controllers\Api\AppuntamentoController;
+use App\Http\Controllers\Api\ContattoMedicoController;
 use App\Jobs\TestLogJob;
 
 /*
@@ -44,6 +45,9 @@ Route::post('/preventivi/richiedi-chiamata', [PreventivoController::class, 'rich
 // --- PROFILO PUBBLICO MEDICO ---
 Route::get('/profilo-pubblico-medico/{medicoId}', [ProfiloMedicoController::class, 'showPublicProfile'])
     ->where('medicoId', '[0-9]+');
+
+// --- RICHIESTA CONTATTO MEDICO ---
+Route::post('/contatto-medico', [ContattoMedicoController::class, 'richiediContatto']);
 
 /*
 |--------------------------------------------------------------------------
