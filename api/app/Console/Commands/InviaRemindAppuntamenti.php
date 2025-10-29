@@ -72,7 +72,11 @@ class InviaRemindAppuntamenti extends Command
                         continue;
                     }
 
-                    $nomeStudio = $anagraficaMedico->ragione_sociale ?? 'Studio Medico';
+                    if (!$anagraficaMedico) {
+                        Log::warning('[RemindAppuntamenti] Anagrafica medico non trovata per appuntamento ID: ' . $appuntamento->id);
+                        $errori++;
+                        continue;
+                    }
 
                     Log::info('[RemindAppuntamenti] Invio remind a: ' . $preventivo->email_paziente . ' per appuntamento ID: ' . $appuntamento->id);
 
@@ -82,7 +86,7 @@ class InviaRemindAppuntamenti extends Command
                             $appuntamento,
                             $preventivo->nome_paziente ?? '',
                             $preventivo->cognome_paziente ?? '',
-                            $nomeStudio
+                            $anagraficaMedico
                         ));
 
                     // Marca come inviato

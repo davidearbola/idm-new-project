@@ -318,15 +318,13 @@ class AppuntamentoController extends Controller
 
             // Invia email al paziente (il paziente non ha account, quindi usa Notification::route())
             $preventivo = $appuntamento->proposta->preventivoPaziente;
-            if ($preventivo && $preventivo->email_paziente) {
-                $nomeStudio = $medico->anagraficaMedico->ragione_sociale ?? 'Studio Medico';
-
+            if ($preventivo && $preventivo->email_paziente && $medico->anagraficaMedico) {
                 Notification::route('mail', $preventivo->email_paziente)
                     ->notify(new AppuntamentoFissatoPazienteNotification(
                         $appuntamento,
                         $preventivo->nome_paziente ?? '',
                         $preventivo->cognome_paziente ?? '',
-                        $nomeStudio
+                        $medico->anagraficaMedico
                     ));
             }
 

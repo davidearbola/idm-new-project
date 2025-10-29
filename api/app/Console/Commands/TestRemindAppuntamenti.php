@@ -89,16 +89,19 @@ class TestRemindAppuntamenti extends Command
                 continue;
             }
 
+            if (!$anagraficaMedico) {
+                $this->error('Anagrafica medico mancante, skip');
+                continue;
+            }
+
             if ($this->confirm('Vuoi inviare la email di remind per questo appuntamento?', true)) {
                 try {
-                    $nomeStudio = $anagraficaMedico->ragione_sociale ?? 'Studio Medico';
-
                     Notification::route('mail', $preventivo->email_paziente)
                         ->notify(new AppuntamentoRemindPazienteNotification(
                             $appuntamento,
                             $preventivo->nome_paziente ?? '',
                             $preventivo->cognome_paziente ?? '',
-                            $nomeStudio
+                            $anagraficaMedico
                         ));
 
                     $this->info('✓ Email inviata con successo!');
