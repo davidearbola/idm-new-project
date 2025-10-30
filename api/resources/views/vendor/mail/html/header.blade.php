@@ -1,9 +1,9 @@
 
 <tr>
-    {{-- Aggiungiamo lo stile "text-align: center;" direttamente alla cella <td> --}}
+    {{-- Logo non cliccabile - solo immagine centrata --}}
     <td class="header" style="text-align: center;">
-        <a href="{{ $url }}" style="display: inline-block;">
+        <div style="display: inline-block;">
             {{ $slot }}
-        </a>
+        </div>
     </td>
 </tr>
