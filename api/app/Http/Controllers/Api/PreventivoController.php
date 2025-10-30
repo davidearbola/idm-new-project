@@ -173,7 +173,7 @@ class PreventivoController extends Controller
         $lat = 45.4642000;
         $lng = 9.1900000;
 
-        /* GEOCODING CON GOOGLE MAPS API - DA ATTIVARE IN FUTURO
+        // GEOCODING CON GOOGLE MAPS API - DA ATTIVARE IN FUTURO
         // Costruisci l'indirizzo completo per la geocodifica
         $indirizzoCompleto = trim(implode(', ', [
             $validated['indirizzo'],
@@ -228,7 +228,6 @@ class PreventivoController extends Controller
                 'indirizzo' => $indirizzoCompleto,
             ]);
         }
-        */
 
         // Salva i dati del paziente
         $preventivoPaziente->update([
