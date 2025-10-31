@@ -366,9 +366,12 @@ class PreventivoController extends Controller
         $recallTime = $now->format('H:i');   // es: 15:37
         $recallTimeTo = $now->copy()->addMinutes(15)->format('H:i'); // +15 minuti
 
+        // Recupera il PIN Telmar Sales dal medico, se disponibile
+        $servicePIN = $proposta->medico->anagraficaMedico->pin_telmar_sales ?? '00000001';
+
         // Costruisci i parametri per la chiamata API
         $params = [
-            'ServicePIN' => '00000001',
+            'ServicePIN' => $servicePIN,
             'Nominativo' => $nominativo,
             'Telefono' => $telefono,
             'Indirizzo' => $indirizzo,

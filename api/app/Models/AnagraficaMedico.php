@@ -24,7 +24,9 @@ class AnagraficaMedico extends Model
         'step_profilo_completed_at',
         'step_staff_completed_at',
         'step_agenda_completed_at',
-        'tipo_registrazione'
+        'tipo_registrazione',
+        'pin_telmar_sales',
+        'id_sales_cms'
     ];
 
     protected $casts = [

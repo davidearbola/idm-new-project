@@ -171,6 +171,8 @@ class AuthController extends Controller
             'provincia' => ['required', 'string', 'max:255'],
             'lat' => ['required', 'numeric', 'between:-90,90'],
             'lng' => ['required', 'numeric', 'between:-180,180'],
+            'pin_telmar_sales' => ['nullable', 'string', 'max:255'],
+            'id_sales_cms' => ['nullable', 'integer'],
         ]);
 
         $temporaryPassword = 'Vivi' . random_int(1000, 9999) . '!';
@@ -194,6 +196,8 @@ class AuthController extends Controller
             'provincia' => $validated['provincia'],
             'lat' => $validated['lat'],
             'lng' => $validated['lng'],
+            'pin_telmar_sales' => $validated['pin_telmar_sales'] ?? null,
+            'id_sales_cms' => $validated['id_sales_cms'] ?? null,
         ]);
 
         $user->notify(new WelcomeViviSaluteUser($temporaryPassword));
