@@ -187,11 +187,35 @@ class PreventivoController extends Controller
             // Chiama l'API di Google Maps Geocoding
             $googleMapsApiKey = env('GOOGLE_MAPS_API_KEY');
 
-            $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+            // Log della chiave API (mascherata per sicurezza)-
+            $keyPreview = $googleMapsApiKey ? substr($googleMapsApiKey, 0, 8) . '...' : 'MANCANTE';
+            Log::info('Tentativo geocoding - Preparazione richiesta', [
+                'indirizzo' => $indirizzoCompleto,
+                'api_key_preview' => $keyPreview,
+                'api_key_presente' => !empty($googleMapsApiKey),
+            ]);
+
+            $params = [
                 'address' => $indirizzoCompleto,
                 'key' => $googleMapsApiKey,
                 'region' => 'it', // Privilegia risultati italiani
                 'language' => 'it', // Risposta in italiano
+            ];
+
+            // Log dell'URL completo (senza la chiave per sicurezza)
+            $urlForLog = 'https://maps.googleapis.com/maps/api/geocode/json?' . http_build_query([
+                'address' => $indirizzoCompleto,
+                'key' => $keyPreview,
+                'region' => 'it',
+                'language' => 'it',
+            ]);
+            Log::info('URL chiamata Google Geocoding API', ['url' => $urlForLog]);
+
+            $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', $params);
+
+            Log::info('Risposta Google Geocoding API', [
+                'status_code' => $response->status(),
+                'response_body' => $response->body(),
             ]);
 
             if ($response->successful()) {
@@ -213,6 +237,8 @@ class PreventivoController extends Controller
                     Log::warning('Geocoding non ha prodotto risultati', [
                         'indirizzo' => $indirizzoCompleto,
                         'status' => $data['status'],
+                        'error_message' => $data['error_message'] ?? 'N/A',
+                        'response_completa' => $data,
                     ]);
                 }
             } else {
